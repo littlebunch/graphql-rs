@@ -5,6 +5,7 @@ extern crate serde_json;
 use crate::db::MysqlPool;
 use crate::schema::{derivations, food_groups, foods, manufacturers, nutrient_data, nutrients};
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
 use juniper::RootNode;
 
@@ -21,7 +22,7 @@ pub struct QueryRoot;
 
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    /*fn foods(context: &Context, mut max: i32, mut offset: i32) -> Vec<Food> {
+    fn foods(context: &Context, mut max: i32, mut offset: i32, mut sort: String) -> Vec<Foodview> {
         use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
@@ -30,62 +31,35 @@ impl QueryRoot {
         if offset < 0 {
             offset = 0
         }
-        foods
-            .limit(max as i64)
-            .offset(offset as i64)
-            .load::<Food>(&conn)
-            .expect("error loading foods")
-    }*/
+        let food = Food::new();
+        let data = food
+            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .expect("error loading foods");
+
+        let mut fv: Vec<Foodview> = Vec::new();
+        for i in &data {
+            let f = &i;
+            let mut fdv = Foodview::create(&f, &conn);
+            fv.push(fdv);
+        }
+        fv
+    }
     fn food(context: &Context, fid: String) -> Vec<Foodview> {
         use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
 
-        if fid.len() >= 14 {
+        if fid.len() >= 10 {
             food.upc = fid;
         } else {
             food.fdc_id = fid;
         }
-        
+
         let data = food.get(&conn).expect("error loading food");
         let mut fv: Vec<Foodview> = Vec::new();
         for i in &data {
             let f = &i;
-            let mut fdv = Foodview::new();
-            fdv.publication_date = f.publication_date;
-            fdv.modified_date = f.modified_date;
-            fdv.available_date = f.available_date;
-            fdv.upc = f.upc.to_string();
-            fdv.fdc_id = f.fdc_id.to_string();
-            fdv.description = f.description.to_string();
-            fdv.food_group = String::from("unknown");
-            fdv.manufacturer = String::from("unknown");
-            fdv.datasource = f.datasource.to_string();
-            fdv.serving_description = Some(
-                f.serving_description
-                    .as_ref()
-                    .map(|n| n.to_string())
-                    .unwrap_or("unknown".to_string()),
-            );
-            fdv.serving_size = f.serving_size;
-            fdv.serving_unit = Some(
-                f.serving_unit
-                    .as_ref()
-                    .map(|n| n.to_string())
-                    .unwrap_or("unknown".to_string()),
-            );
-            fdv.country = Some(
-              f.country
-                  .as_ref()
-                  .map(|n| n.to_string())
-                  .unwrap_or("unknown".to_string()),
-          );
-            fdv.ingredients = Some(
-              f.ingredients
-                  .as_ref()
-                  .map(|n| n.to_string())
-                  .unwrap_or("unknown".to_string()),
-          );
+            let mut fdv = Foodview::create(&f, &conn);
             fv.push(fdv);
         }
         fv
@@ -104,7 +78,7 @@ pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
 }
-#[derive(juniper::GraphQLObject)]
+#[derive(juniper::GraphQLObject, Debug)]
 #[graphql(description = "Defines a branded food product")]
 pub struct Foodview {
     #[graphql(description = "Date this food was last published")]
@@ -215,6 +189,45 @@ impl Foodview {
             serving_description: None,
             country: None,
             ingredients: None,
+        }
+    }
+    /// creates a new food view from a food
+    pub fn create(f: &Food, conn: &MysqlConnection) -> Self {
+        Self {
+            publication_date: f.publication_date,
+            modified_date: f.modified_date,
+            available_date: f.available_date,
+            upc: f.upc.to_string(),
+            fdc_id: f.fdc_id.to_string(),
+            description: f.description.to_string(),
+            food_group: f.get_food_group_name(&conn).unwrap(),
+            manufacturer: f.get_manufacturer_name(&conn).unwrap(),
+            datasource: f.datasource.to_string(),
+            serving_description: Some(
+                f.serving_description
+                    .as_ref()
+                    .map(|n| n.to_string())
+                    .unwrap_or("unknown".to_string()),
+            ),
+            serving_size: f.serving_size,
+            serving_unit: Some(
+                f.serving_unit
+                    .as_ref()
+                    .map(|n| n.to_string())
+                    .unwrap_or("unknown".to_string()),
+            ),
+            country: Some(
+                f.country
+                    .as_ref()
+                    .map(|n| n.to_string())
+                    .unwrap_or("unknown".to_string()),
+            ),
+            ingredients: Some(
+                f.ingredients
+                    .as_ref()
+                    .map(|n| n.to_string())
+                    .unwrap_or("unknown".to_string()),
+            ),
         }
     }
 }

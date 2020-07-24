@@ -50,10 +50,30 @@ impl Food {
             ingredients: None,
         }
     }
-    pub fn get(&self, conn: &MysqlConnection) -> Result<Vec<Food>, Box<dyn Error>> {
-        use crate::schema::food_groups::dsl::*;
+    pub fn browse(
+        &self,
+        max: i64,
+        off: i64,
+        sort: String,
+        order: String,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<Food>, Box<dyn Error>> {
         use crate::schema::foods::dsl::*;
-        use crate::schema::manufacturers::dsl::*;
+        let mut q = foods.into_boxed();
+        match &*sort {
+            "description" => q = q.order(Box::new(description.asc())),
+            "upc" => q = q.order(Box::new(upc.asc())),
+            "fdcId" => q = q.order(Box::new(fdc_id.asc())),
+            _ => q = q.order(Box::new(id.asc())),
+        };
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Food>(conn)?;
+        Ok(data)
+    }
+    pub fn get(&self, conn: &MysqlConnection) -> Result<Vec<Food>, Box<dyn Error>> {
+        use crate::schema::foods::dsl::*;
         let mut data = vec![];
         if self.upc != "unknown" {
             data = foods.filter(upc.eq(&self.upc)).load::<Food>(conn)?;
@@ -63,6 +83,20 @@ impl Food {
             data = foods.filter(fdc_id.eq(&self.fdc_id)).load::<Food>(conn)?;
         }
         Ok(data)
+    }
+    pub fn get_food_group_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
+        use crate::schema::food_groups::dsl::*;
+        let fg = food_groups
+            .find(&self.food_group_id)
+            .first::<Foodgroup>(conn)?;
+        Ok(fg.description)
+    }
+    pub fn get_manufacturer_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
+        use crate::schema::manufacturers::dsl::*;
+        let m = manufacturers
+            .find(&self.manufacturer_id)
+            .first::<Manufacturer>(conn)?;
+       Ok(m.name)
     }
     // Returns a JSON string representation of nutrient data elements for a food id
     /* pub fn get_nutrient_data(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
