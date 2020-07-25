@@ -48,7 +48,7 @@ impl QueryRoot {
         use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
-
+        
         if fid.len() >= 10 {
             food.upc = fid;
         } else {
@@ -59,9 +59,19 @@ impl QueryRoot {
         let mut fv: Vec<Foodview> = Vec::new();
         for i in &data {
             let f = &i;
+            let mut nutform: Vec<NutrientdataForm> = f.get_nutrient_data(&conn).expect("error loading nutrient data");
+            let mut ndv: Vec<Nutrientdataview> = Vec::new();
+            for j in &nutform {
+            let nf=&j;
+              let nv = Nutrientdataview::create(&nf);
+              ndv.push(nv);
+            }
+          
             let mut fdv = Foodview::create(&f, &conn);
+            fdv.nutrient_data=ndv;
             fv.push(fdv);
         }
+        
         fv
     }
 }
@@ -82,11 +92,11 @@ pub fn create_schema() -> Schema {
 #[graphql(description = "Defines a branded food product")]
 pub struct Foodview {
     #[graphql(description = "Date this food was last published")]
-    pub publication_date: NaiveDateTime,
+    pub publication_date: String,
     #[graphql(description = "Date of last change")]
-    pub modified_date: NaiveDateTime,
+    pub modified_date: String,
     #[graphql(description = "Date this food was first available")]
-    pub available_date: NaiveDateTime,
+    pub available_date: String,
     #[graphql(description = "UPC/GTIN code for a food")]
     pub upc: String,
     #[graphql(description = "Food Data Central Id")]
@@ -109,94 +119,16 @@ pub struct Foodview {
     pub country: Option<String>,
     #[graphql(description = "Food ingredients")]
     pub ingredients: Option<String>,
+    #[graphql(description = "nutrient data for a food")]
+    pub nutrient_data: Vec<Nutrientdataview>,
 }
 impl Foodview {
-    pub fn publication_date(&self) -> NaiveDateTime {
-        self.publication_date
-    }
-    pub fn modified_date(&self) -> NaiveDateTime {
-        self.modified_date
-    }
-    pub fn available_date(&self) -> NaiveDateTime {
-        self.available_date
-    }
-    pub fn upc(&self) -> &str {
-        &self.upc
-    }
-    pub fn fdc_id(&self) -> &str {
-        &self.fdc_id
-    }
-    pub fn description(&self) -> &str {
-        &self.description
-    }
-    pub fn food_group(&self) -> &str {
-        &self.food_group
-    }
-    pub fn manufacturer(&self) -> &str {
-        &self.manufacturer
-    }
-    pub fn datasource(&self) -> &str {
-        self.datasource.as_str()
-    }
-    pub fn serving_size(&self) -> Option<f64> {
-        self.serving_size
-    }
-    pub fn serving_unit(&self) -> Option<String> {
-        Some(
-            self.serving_unit
-                .as_ref()
-                .map(|n| n.to_string())
-                .unwrap_or("unknown".to_string()),
-        )
-    }
-    pub fn serving_description(&self) -> Option<String> {
-        Some(
-            self.serving_description
-                .as_ref()
-                .map(|n| n.to_string())
-                .unwrap_or("unknown".to_string()),
-        )
-    }
-    pub fn country(&self) -> Option<String> {
-        Some(
-            self.country
-                .as_ref()
-                .map(|n| n.to_string())
-                .unwrap_or("unknown".to_string()),
-        )
-    }
-    pub fn ingredients(&self) -> Option<String> {
-        Some(
-            self.ingredients
-                .as_ref()
-                .map(|n| n.to_string())
-                .unwrap_or("unknown".to_string()),
-        )
-    }
-    pub fn new() -> Self {
-        Self {
-            publication_date: NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),
-            modified_date: NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),
-            available_date: NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),
-            upc: String::from("unknown"),
-            fdc_id: String::from("unknown"),
-            description: String::from("unknown"),
-            food_group: String::from("unknown"),
-            manufacturer: String::from("unknown"),
-            datasource: String::from("unknown"),
-            serving_size: None,
-            serving_unit: None,
-            serving_description: None,
-            country: None,
-            ingredients: None,
-        }
-    }
     /// creates a new food view from a food
     pub fn create(f: &Food, conn: &MysqlConnection) -> Self {
         Self {
-            publication_date: f.publication_date,
-            modified_date: f.modified_date,
-            available_date: f.available_date,
+            publication_date: f.publication_date.format("%Y-%m-%d").to_string(),
+            modified_date: f.modified_date.format("%Y-%m-%d").to_string(),
+            available_date: f.available_date.format("%Y-%m-%d").to_string(),
             upc: f.upc.to_string(),
             fdc_id: f.fdc_id.to_string(),
             description: f.description.to_string(),
@@ -228,28 +160,48 @@ impl Foodview {
                     .map(|n| n.to_string())
                     .unwrap_or("unknown".to_string()),
             ),
+            nutrient_data: Vec::new(),
         }
     }
 }
 
-#[derive(juniper::GraphQLObject)]
+#[derive(juniper::GraphQLObject,Debug)]
 #[graphql(description = "A nutrient value for a given food and nutrient")]
-pub struct Nutrientdata_view {
-    pub id: i32,
+pub struct Nutrientdataview {
     pub value: f64,
-    // pub derivation: Derivation,
-    // pub nutrient: Nutrient,
-    pub food_id: i32,
+    pub derivation: String,
+    pub derivation_code: String,
+    pub nutrient_no: String,
+    pub nutrient: String,
 }
 
-#[derive(juniper::GraphQLObject)]
+impl Nutrientdataview {
+  pub fn create(n: &NutrientdataForm) -> Self {
+    Self {
+      value: n.value,
+      nutrient_no: n.nutrient_no.to_string(),
+      nutrient: n.nutrient.to_string(),
+      derivation: n.derivation.to_string(),
+      derivation_code: n.derivation_code.to_string(),
+    }
+  }
+}
+
+#[derive(juniper::GraphQLObject,Debug)]
 #[graphql(description = "How a nutrient value is dervied for a food")]
-pub struct Derivation {
-    id: i32,
+pub struct Derivationview {
     code: String,
     description: String,
 }
-#[derive(juniper::GraphQLInputObject)]
+#[derive(juniper::GraphQLObject,Debug)]
+#[graphql(description = "How a nutrient value is dervied for a food")]
+pub struct Nutrientview {
+    no: String,
+    name: String,
+    unit: String,
+}
+
+#[derive(juniper::GraphQLInputObject,Debug)]
 pub struct BrowseRequest {
     pub max: i32,
     pub offset: i32,

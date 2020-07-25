@@ -99,7 +99,7 @@ impl Food {
        Ok(m.name)
     }
     // Returns a JSON string representation of nutrient data elements for a food id
-    /* pub fn get_nutrient_data(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
+    pub fn get_nutrient_data(&self, conn: &MysqlConnection) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
         use crate::schema::nutrients::dsl::*;
@@ -120,8 +120,8 @@ impl Food {
             ndf.derivation_code = (*(d.code)).to_string();
             ndv.push(ndf);
         }
-        Ok(serde_json::to_string(&ndv)?)
-    }*/
+        Ok(ndv)
+    }
 }
 use crate::schema::food_groups::dsl::*;
 use crate::schema::foods::dsl::*;
@@ -342,6 +342,27 @@ impl Derivation {
             id: 0,
             code: String::from("Unknown"),
             description: String::from("Unknown"),
+        }
+    }
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NutrientdataForm {
+    pub value: f64,
+    pub derivation: String,
+    pub derivation_code: String,
+    pub nutrient: String,
+    pub nutrient_no: String,
+    pub unit: String,
+}
+impl NutrientdataForm {
+    pub fn new() -> Self {
+        Self {
+            value: 0.0,
+            derivation: String::from("unknown"),
+            derivation_code: String::from("unknown"),
+            nutrient: String::from("unknown"),
+            nutrient_no: String::from("unknown"),
+            unit: String::from("unknown"),
         }
     }
 }
