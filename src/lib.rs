@@ -10,3 +10,8 @@ extern crate serde_json;
 extern crate serde_derive;
 use self::diesel::prelude::*;
 use std::error::Error;
+pub trait Get {
+    type Item;
+    type Conn;
+    fn get(&self,c:&Self::Conn) -> Result<Vec<Self::Item>,Box<dyn Error>>;
+}

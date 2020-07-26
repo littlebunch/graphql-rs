@@ -1,6 +1,7 @@
 extern crate diesel;
 
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
+use crate::Get;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
 use std::error::Error;
@@ -72,18 +73,7 @@ impl Food {
         let data = q.load::<Food>(conn)?;
         Ok(data)
     }
-    pub fn get(&self, conn: &MysqlConnection) -> Result<Vec<Food>, Box<dyn Error>> {
-        use crate::schema::foods::dsl::*;
-        let mut data = vec![];
-        if self.upc != "unknown" {
-            data = foods.filter(upc.eq(&self.upc)).load::<Food>(conn)?;
-        } else if self.id > 0 {
-            data = foods.find(&self.id).load::<Food>(conn)?;
-        } else {
-            data = foods.filter(fdc_id.eq(&self.fdc_id)).load::<Food>(conn)?;
-        }
-        Ok(data)
-    }
+   
     pub fn get_food_group_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
         use crate::schema::food_groups::dsl::*;
         let fg = food_groups
@@ -98,7 +88,26 @@ impl Food {
             .first::<Manufacturer>(conn)?;
        Ok(m.name)
     }
-    // Returns a JSON string representation of nutrient data elements for a food id
+    pub fn get_nutrient_data_by_nid(&self, nids:&Vec<String>,conn: &MysqlConnection) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
+        use crate::schema::derivations::dsl::*;
+        use crate::schema::nutrient_data::dsl::*;
+        use crate::schema::nutrients::dsl::*;
+        let data = nutrient_data
+            .filter(food_id.eq(&self.id))
+            .inner_join(nutrients)
+            .filter(nutrientno.eq_any(nids))
+            .inner_join(derivations)
+            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?;
+        let mut ndv: Vec<NutrientdataForm> = Vec::new();
+        for i in &data {
+            let (nd, n, d) = &i;
+            let ndf = NutrientdataForm::create((nd,n,d));
+            ndv.push(ndf);
+        }
+        Ok(ndv)
+    }
+    
+    // 
     pub fn get_nutrient_data(&self, conn: &MysqlConnection) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
@@ -110,90 +119,33 @@ impl Food {
             .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?;
         let mut ndv: Vec<NutrientdataForm> = Vec::new();
         for i in &data {
-            let (nd, n, d) = &i;
-            let mut ndf = NutrientdataForm::new();
-            ndf.value = nd.value;
-            ndf.nutrient = (*(n.description)).to_string();
-            ndf.nutrient_no = (*(n.nutrientno)).to_string();
-            ndf.unit = (*(n.unit)).to_string();
-            ndf.derivation = (*(d.description)).to_string();
-            ndf.derivation_code = (*(d.code)).to_string();
+            let (nd,n,d)=&i;
+            let ndf = NutrientdataForm::create((nd,n,d));
             ndv.push(ndf);
         }
         Ok(ndv)
     }
 }
+impl Get for Food {
+    type Item=Food;
+    type Conn=MysqlConnection;
+    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>>{
+        use crate::schema::foods::dsl::*;
+        let mut data = vec![];
+        if self.upc != "unknown" {
+            data = foods.filter(upc.eq(&self.upc)).load::<Food>(conn)?;
+        } else if self.id > 0 {
+            data = foods.find(&self.id).load::<Food>(conn)?;
+        } else {
+            data = foods.filter(fdc_id.eq(&self.fdc_id)).load::<Food>(conn)?;
+        }
+        Ok(data)
+    }
+}
 use crate::schema::food_groups::dsl::*;
 use crate::schema::foods::dsl::*;
 use crate::schema::manufacturers::dsl::*;
-/// Returns a JSON string representing a array of Foods identified by database id, UPC, or FDCID as
-/// determined by the contents of Self.  That is, if self.upc is set to anything other than the default ("unknown")
-/// then the lookup is by self.upc.  Ditto for FDCID and for id.
-/*impl Get for Food {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
 
-        let mut data = vec![];
-        if self.upc != "unknown" {
-            data = foods
-                .filter(upc.eq(&self.upc))
-                .inner_join(manufacturers)
-                .inner_join(food_groups)
-                .load::<(Food, Manufacturer, Foodgroup)>(conn)?;
-        } else if self.id > 0 {
-            data = foods
-                .find(&self.id)
-                .inner_join(manufacturers)
-                .inner_join(food_groups)
-                .load::<(Food, Manufacturer, Foodgroup)>(conn)?;
-        } else {
-            data = foods
-                .filter(fdc_id.eq(&self.fdc_id))
-                .inner_join(manufacturers)
-                .inner_join(food_groups)
-                .load::<(Food, Manufacturer, Foodgroup)>(conn)?;
-        }
-        let mut ffv: Vec<Foodform> = Vec::new();
-        for i in &mut data {
-            let (f, m, g) = &i;
-            let mut ff = Foodform::new(f);
-            ff.manufacturer = (*(m.name)).to_string();
-            ff.food_group = (*(g.description)).to_string();
-            ffv.push(ff)
-        }
-        Ok(serde_json::to_string(&ffv)?)
-    }
-}*/
-
-/*impl Browse for Food {
-    fn browse(&self, r: &BrowseRequest, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        use crate::schema::foods::dsl::*;
-        /*let q=foods
-        .inner_join(manufacturers)
-        .inner_join(food_groups)
-        .limit(r.max)
-        .offset(r.offset)
-        .order(description);
-
-        let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
-        println!("The query: {:?}", debug);*/
-       let mut data = foods
-           .inner_join(manufacturers)
-            .inner_join(food_groups)
- //           .order(id)
-            .limit(r.max)
-            .offset(r.offset)
-            .load::<(Food,Manufacturer,Foodgroup)>(conn)?;
-        let mut ffv: Vec<Foodform> = Vec::new();
-        for i in &mut data {
-            let (f, m, g) = &i;
-            let mut ff = Foodform::new(f);
-            ff.manufacturer = (*(m.name)).to_string();
-            ff.food_group = (*(g.description)).to_string();
-            ffv.push(ff);
-        }
-        Ok(serde_json::to_string(&ffv)?)
-    }
-}*/
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 #[table_name = "manufacturers"]
 pub struct Manufacturer {
@@ -209,21 +161,7 @@ impl Manufacturer {
     }
 }
 
-/*impl Get for Manufacturer {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        let m = manufacturers.find(&self.id).first::<Manufacturer>(conn)?;
-        Ok(serde_json::to_string(&m)?)
-    }
-}
-impl Browse for Manufacturer {
-    fn browse(&self, r: &BrowseRequest, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        let data = manufacturers
-            .limit(r.max)
-            .offset(r.offset)
-            .load::<Manufacturer>(conn)?;
-        Ok(serde_json::to_string(&data)?)
-    }
-}*/
+
 #[derive(Queryable, Associations, Serialize, Deserialize, Debug)]
 #[table_name = "food_groups"]
 pub struct Foodgroup {
@@ -238,23 +176,7 @@ impl Foodgroup {
         }
     }
 }
-/*impl Get for Foodgroup {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        use crate::schema::food_groups::dsl::*;
-        let m = food_groups.find(&self.id).first::<Foodgroup>(conn)?;
-        Ok(serde_json::to_string(&m)?)
-    }
-}
-impl Browse for Foodgroup {
-    fn browse(&self, r: &BrowseRequest, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        use crate::schema::food_groups::dsl::*;
-        let data = food_groups
-            .limit(r.max)
-            .offset(r.offset)
-            .load::<Foodgroup>(conn)?;
-        Ok(serde_json::to_string(&data)?)
-    }
-}*/
+
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 // Nutrient as in Calcium, Energy, etc, etc.
 pub struct Nutrient {
@@ -273,23 +195,7 @@ impl Nutrient {
         }
     }
 }
-/*use crate::schema::nutrients::dsl::*;
-impl Get for Nutrient {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
 
-        let n = nutrients.find(&self.id).first::<Nutrient>(conn)?;
-        Ok(serde_json::to_string(&n)?)
-    }
-}
-impl Browse for Nutrient {
-    fn browse(&self, r: &BrowseRequest, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        let data = nutrients
-            .limit(r.max)
-            .offset(r.offset)
-            .load::<Nutrient>(conn)?;
-        Ok(serde_json::to_string(&data)?)
-    }
-}*/
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 #[belongs_to(Food)]
 #[belongs_to(Nutrient)]
@@ -321,13 +227,7 @@ impl Nutrientdata {
         }
     }
 }
-/*impl Get for Nutrientdata {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        use crate::schema::nutrient_data::dsl::*;
-        let nd = nutrient_data.find(&self.id).first::<Nutrientdata>(conn)?;
-        Ok(serde_json::to_string(&nd)?)
-    }
-}*/
+
 
 // Derivations are descriptions of how a nutrient value was derived.
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
@@ -365,21 +265,14 @@ impl NutrientdataForm {
             unit: String::from("unknown"),
         }
     }
-}
-/*use crate::schema::derivations::dsl::*;
-impl Get for Derivation {
-    fn get(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-
-        let d = derivations.find(&self.id).first::<Derivation>(conn)?;
-        Ok(serde_json::to_string(&d)?)
+    pub fn create((nd,n,d):(&Nutrientdata, &Nutrient, &Derivation)) -> Self {
+         Self {
+            value: nd.value,
+            nutrient: (*(n.description)).to_string(),
+            nutrient_no: (*(n.nutrientno)).to_string(),
+            unit: (*(n.unit)).to_string(),
+            derivation: (*(d.description)).to_string(),
+            derivation_code: (*(d.code)).to_string(),
+        }
     }
 }
-impl Browse for Derivation {
-    fn browse(&self, r: &BrowseRequest, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
-        let data = derivations
-            .limit(r.max)
-            .offset(r.offset)
-            .load::<Derivation>(conn)?;
-        Ok(serde_json::to_string(&data)?)
-    }
-}*/

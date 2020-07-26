@@ -18,4 +18,3 @@ pub fn connect() -> MysqlPool {
     let database_url = env::var("DATABASE_URL").expect("Bad url");
     init(&database_url).expect("Error")
 }
-
