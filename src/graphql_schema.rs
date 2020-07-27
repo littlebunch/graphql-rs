@@ -7,9 +7,10 @@ use crate::schema::{derivations, food_groups, foods, manufacturers, nutrient_dat
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
+use graphql_rs::Browse;
+use graphql_rs::Get;
 use juniper::RootNode;
 use std::option;
-use graphql_rs::Get;
 const MAX_RECS: i32 = 150;
 
 #[derive(Clone)]
@@ -23,7 +24,13 @@ pub struct QueryRoot;
 
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    fn foods(context: &Context, mut max: i32, mut offset: i32, mut sort: String, nids: Vec<String>) -> Vec<Foodview> {
+    fn foods(
+        context: &Context,
+        mut max: i32,
+        mut offset: i32,
+        mut sort: String,
+        nids: Vec<String>,
+    ) -> Vec<Foodview> {
         use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
@@ -38,7 +45,7 @@ impl QueryRoot {
             .expect("error loading foods");
         Foodview::build_view(data, &nids, &conn)
     }
-    fn food(context: &Context, fid: String,nids: Vec<String>) -> Vec<Foodview> {
+    fn food(context: &Context, fid: String, nids: Vec<String>) -> Vec<Foodview> {
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
 
@@ -47,10 +54,49 @@ impl QueryRoot {
         } else {
             food.fdc_id = fid;
         }
-        
+
         let data = food.get(&conn).expect("error loading food");
         Foodview::build_view(data, &nids, &conn)
     }
+    fn nutrient(context: &Context, nno: String) -> Vec<Nutrientview> {
+        use crate::schema::nutrients::dsl::*;
+        let conn = context.db.get().unwrap();
+        let mut n = Nutrient::new();
+        n.nutrientno = nno;
+        let nut = n.get(&conn).unwrap();
+        let mut nv: Vec<Nutrientview> = Vec::new();
+        for i in &nut {
+            let nv1 = &i;
+            nv.push(Nutrientview::create(nv1));
+        }
+        nv
+    }
+    fn nutrients(context: &Context,
+      mut max: i32,
+      mut offset: i32,
+      mut sort: String,
+      nids: Vec<String>,
+  ) -> Vec<Nutrientview> {
+    use crate::schema::foods::dsl::*;
+        let conn = context.db.get().unwrap();
+        if max > MAX_RECS {
+            max = MAX_RECS;
+        }
+        if offset < 0 {
+            offset = 0;
+        }
+        let n = Nutrient::new();
+        let data = n
+            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .expect("error loading nutrients");
+            let mut nv: Vec<Nutrientview> = Vec::new();
+        for i in &data {
+          let nv1=&i;
+          nv.push(Nutrientview::create(nv1));
+        }
+        nv
+
+  }
 }
 pub struct MutationRoot;
 
@@ -113,10 +159,13 @@ impl Foodview {
         for i in &fd {
             let f = &i;
             let mut fdv = Foodview::create(&f, &conn);
-            let nutform: Vec<NutrientdataForm> = 
-            match nids.len() {
-              0 => f.get_nutrient_data(&conn).expect("error loading nutrient data"),
-              _ => f.get_nutrient_data_by_nid(nids,&conn).expect("error loading nutrient data by nids"),
+            let nutform: Vec<NutrientdataForm> = match nids.len() {
+                0 => f
+                    .get_nutrient_data(&conn)
+                    .expect("error loading nutrient data"),
+                _ => f
+                    .get_nutrient_data_by_nid(nids, &conn)
+                    .expect("error loading nutrient data by nids"),
             };
             let mut ndv: Vec<Nutrientdataview> = Vec::new();
             for j in &nutform {
@@ -219,19 +268,34 @@ pub struct Derivationview {
     description: String,
 }
 #[derive(juniper::GraphQLObject, Debug)]
-#[graphql(description = "How a nutrient value is dervied for a food")]
+#[graphql(description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human healt")]
 pub struct Nutrientview {
-    no: String,
+  #[graphql(description = "A unique code identifying a nutrient or food constituent")]
+    nbr: String,
+    #[graphql(description = "Name of the nutrient")]
     name: String,
+    #[graphql(description = "The standard unit of measure for the nutrient (per 100g of food)")]
     unit: String,
+}
+impl Nutrientview {
+    pub fn create(n: &Nutrient) -> Self {
+        Self {
+            nbr: n.nutrientno.to_string(),
+            name: n.description.to_string(),
+            unit: n.unit.to_string(),
+        }
+    }
 }
 
 #[derive(juniper::GraphQLInputObject, Debug)]
-#[graphql(name="BrowseRequest", description="Input object for defining a foods browse query")]
+#[graphql(
+    name = "BrowseRequest",
+    description = "Input object for defining a foods browse query"
+)]
 pub struct Browsequery {
     pub max: i32,
     pub offset: i32,
-    #[graphql(description="Sort order, one of: database id (default),description, upc or fdcId")]
+    #[graphql(description = "Sort order, one of: database id (default),description, upc or fdcId")]
     pub sort: String,
-    pub order: String, 
+    pub order: String,
 }

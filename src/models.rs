@@ -1,6 +1,7 @@
 extern crate diesel;
 
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
+use crate::Browse;
 use crate::Get;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
@@ -51,29 +52,7 @@ impl Food {
             ingredients: None,
         }
     }
-    pub fn browse(
-        &self,
-        max: i64,
-        off: i64,
-        sort: String,
-        order: String,
-        conn: &MysqlConnection,
-    ) -> Result<Vec<Food>, Box<dyn Error>> {
-        use crate::schema::foods::dsl::*;
-        let mut q = foods.into_boxed();
-        match &*sort {
-            "description" => q = q.order(Box::new(description.asc())),
-            "upc" => q = q.order(Box::new(upc.asc())),
-            "fdcId" => q = q.order(Box::new(fdc_id.asc())),
-            _ => q = q.order(Box::new(id.asc())),
-        };
-        q = q.limit(max).offset(off);
-        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
-        // println!("The query: {:?}", debug);
-        let data = q.load::<Food>(conn)?;
-        Ok(data)
-    }
-   
+
     pub fn get_food_group_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
         use crate::schema::food_groups::dsl::*;
         let fg = food_groups
@@ -86,9 +65,13 @@ impl Food {
         let m = manufacturers
             .find(&self.manufacturer_id)
             .first::<Manufacturer>(conn)?;
-       Ok(m.name)
+        Ok(m.name)
     }
-    pub fn get_nutrient_data_by_nid(&self, nids:&Vec<String>,conn: &MysqlConnection) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
+    pub fn get_nutrient_data_by_nid(
+        &self,
+        nids: &Vec<String>,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
         use crate::schema::nutrients::dsl::*;
@@ -101,14 +84,17 @@ impl Food {
         let mut ndv: Vec<NutrientdataForm> = Vec::new();
         for i in &data {
             let (nd, n, d) = &i;
-            let ndf = NutrientdataForm::create((nd,n,d));
+            let ndf = NutrientdataForm::create((nd, n, d));
             ndv.push(ndf);
         }
         Ok(ndv)
     }
-    
-    // 
-    pub fn get_nutrient_data(&self, conn: &MysqlConnection) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
+
+    //
+    pub fn get_nutrient_data(
+        &self,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
         use crate::schema::nutrients::dsl::*;
@@ -119,17 +105,17 @@ impl Food {
             .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?;
         let mut ndv: Vec<NutrientdataForm> = Vec::new();
         for i in &data {
-            let (nd,n,d)=&i;
-            let ndf = NutrientdataForm::create((nd,n,d));
+            let (nd, n, d) = &i;
+            let ndf = NutrientdataForm::create((nd, n, d));
             ndv.push(ndf);
         }
         Ok(ndv)
     }
 }
 impl Get for Food {
-    type Item=Food;
-    type Conn=MysqlConnection;
-    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>>{
+    type Item = Food;
+    type Conn = MysqlConnection;
+    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::foods::dsl::*;
         let mut data = vec![];
         if self.upc != "unknown" {
@@ -139,6 +125,32 @@ impl Get for Food {
         } else {
             data = foods.filter(fdc_id.eq(&self.fdc_id)).load::<Food>(conn)?;
         }
+        Ok(data)
+    }
+}
+impl Browse for Food {
+    type Item = Food;
+    type Conn = MysqlConnection;
+    fn browse(
+        &self,
+        max: i64,
+        off: i64,
+        sort: String,
+        order: String,
+        conn: &Self::Conn,
+    ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::foods::dsl::*;
+        let mut q = foods.into_boxed();
+        match &*sort {
+            "description" => q = q.order(Box::new(description.asc())),
+            "upc" => q = q.order(Box::new(upc.asc())),
+            "fdcId" => q = q.order(Box::new(fdc_id.asc())),
+            _ => q = q.order(Box::new(id.asc())),
+        };
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Food>(conn)?;
         Ok(data)
     }
 }
@@ -160,7 +172,6 @@ impl Manufacturer {
         }
     }
 }
-
 
 #[derive(Queryable, Associations, Serialize, Deserialize, Debug)]
 #[table_name = "food_groups"]
@@ -195,7 +206,43 @@ impl Nutrient {
         }
     }
 }
-
+impl Get for Nutrient {
+    type Item = Nutrient;
+    type Conn = MysqlConnection;
+    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::nutrients::dsl::*;
+        let mut data = vec![];
+        data = nutrients
+            .filter(nutrientno.eq(&self.nutrientno))
+            .load::<Nutrient>(conn)?;
+        Ok(data)
+    }
+}
+impl Browse for Nutrient {
+    type Item = Nutrient;
+    type Conn = MysqlConnection;
+    fn browse(
+        &self,
+        max: i64,
+        off: i64,
+        sort: String,
+        order: String,
+        conn: &Self::Conn,
+    ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::nutrients::dsl::*;
+        let mut q = nutrients.into_boxed();
+        match &*sort {
+            "description" => q = q.order(Box::new(description.asc())),
+            "no" => q = q.order(Box::new(nutrientno.asc())),
+            _ => q = q.order(Box::new(id.asc())),
+        };
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Nutrient>(conn)?;
+        Ok(data)
+    }
+}
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 #[belongs_to(Food)]
 #[belongs_to(Nutrient)]
@@ -227,7 +274,6 @@ impl Nutrientdata {
         }
     }
 }
-
 
 // Derivations are descriptions of how a nutrient value was derived.
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
@@ -265,8 +311,8 @@ impl NutrientdataForm {
             unit: String::from("unknown"),
         }
     }
-    pub fn create((nd,n,d):(&Nutrientdata, &Nutrient, &Derivation)) -> Self {
-         Self {
+    pub fn create((nd, n, d): (&Nutrientdata, &Nutrient, &Derivation)) -> Self {
+        Self {
             value: nd.value,
             nutrient: (*(n.description)).to_string(),
             nutrient_no: (*(n.nutrientno)).to_string(),
