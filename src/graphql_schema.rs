@@ -71,13 +71,14 @@ impl QueryRoot {
         }
         nv
     }
-    fn nutrients(context: &Context,
-      mut max: i32,
-      mut offset: i32,
-      mut sort: String,
-      nids: Vec<String>,
-  ) -> Vec<Nutrientview> {
-    use crate::schema::foods::dsl::*;
+    fn nutrients(
+        context: &Context,
+        mut max: i32,
+        mut offset: i32,
+        mut sort: String,
+        nids: Vec<String>,
+    ) -> Vec<Nutrientview> {
+        use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
             max = MAX_RECS;
@@ -89,14 +90,13 @@ impl QueryRoot {
         let data = n
             .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
             .expect("error loading nutrients");
-            let mut nv: Vec<Nutrientview> = Vec::new();
+        let mut nv: Vec<Nutrientview> = Vec::new();
         for i in &data {
-          let nv1=&i;
-          nv.push(Nutrientview::create(nv1));
+            let nv1 = &i;
+            nv.push(Nutrientview::create(nv1));
         }
         nv
-
-  }
+    }
 }
 pub struct MutationRoot;
 
@@ -268,9 +268,11 @@ pub struct Derivationview {
     description: String,
 }
 #[derive(juniper::GraphQLObject, Debug)]
-#[graphql(description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human healt")]
+#[graphql(
+    description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human healt"
+)]
 pub struct Nutrientview {
-  #[graphql(description = "A unique code identifying a nutrient or food constituent")]
+    #[graphql(description = "A unique code identifying a nutrient or food constituent")]
     nbr: String,
     #[graphql(description = "Name of the nutrient")]
     name: String,
