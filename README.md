@@ -12,7 +12,7 @@ If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/t
 git clone git@github.com:littlebunch/graphql-rs.git
 ```
 ### Step 3: Set-up the database
-You can build the schema from the ground-up using the [Diesel CLI](https://diesel.rs) or save yourself some time and use the dump of a recent version of the Branded Food Products database available [here](https://go.littlebunch.com/bfpd/download) to create the database in your environment.
+You can build the schema from the ground-up using the [Diesel CLI](https://diesel.rs) or save yourself some time and use the dump of a recent version of the Branded Food Products database available [here](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz) to create the database in your environment.
 ### Step 4: Start the service
 You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded start-up:
 
