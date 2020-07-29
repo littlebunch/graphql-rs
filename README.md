@@ -1,7 +1,9 @@
 # graphql-rs
-A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [actix](https://actix.rs), [juniper](https://docs.rs/juniper) and [diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an excercise in learning a Rust, the learning curve for which, for me, has been fairly steep but worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
+A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [actix](https://actix.rs), [juniper](https://docs.rs/juniper) and [diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an excercise in learning a Rust, the learning curve for which has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
-Also, feel free to take this project as a starting point for writing your own graphql service.
+A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  
+
+Feel free to take this project as a starting point for writing your own graphql service.
 ## Building
 ### Step 1: Set-up your environment: 
 If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/tools/install) in your work environment as well as a recent version of [Mariadb](https://go.mariadb.com/download-mariadb-server-community.html?utm_source=google&utm_medium=ppc&utm_campaign=MKG-Search-Google-Branded-DL-NA-Server-DL&gclid=Cj0KCQjwvIT5BRCqARIsAAwwD-T-NRStQ4_3Ci8FyhdSYrsJWofpjOO5yKLxZ6NOGRqRHvdQxIAIjREaAtGWEALw_wcB)/[Mysql](https://www.mysql.com/downloads/)  
@@ -22,3 +24,55 @@ Then run the server from the project root (the path where cargo.toml is located)
 ```
 cargo run
 ```
+## Sample Queries
+The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries: 
+#### Food UPC 000000018753 with all nutrient data:
+```
+{
+  food(fid:"000000018753", nids: []) {
+    upc
+    description
+    servingSize
+    servingDescription
+    servingUnit
+    nutrientData {
+      value
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
+  }
+}
+```
+#### Food UPC 000000018753 with nutrient data for Calcium (nutrient nbr = 301):
+```
+{
+  food(fid:"000000018753", nids: ["301"]) {
+    upc
+    description
+    servingSize
+    servingDescription
+    servingUnit
+    nutrientData {
+      value
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
+  }
+}
+```
+#### Browse foods, ordered by food name:
+```
+{
+  foods(max: 150, offset: 0, sort: "description", nids: []) {
+    upc
+    description
+    manufacturer
+    food
+    ingredients
+    foodGroup
+  }
+}
