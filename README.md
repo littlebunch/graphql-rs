@@ -1,7 +1,7 @@
 # graphql-rs
 A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [actix](https://actix.rs), [juniper](https://docs.rs/juniper) and [diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an excercise in learning a Rust, the learning curve for which has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
-A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  
+A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker deployment is forthcoming.
 
 Feel free to take this project as a starting point for writing your own graphql service.
 ## Building
