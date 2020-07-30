@@ -1,5 +1,5 @@
 # graphql-rs
-A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [actix](https://actix.rs), [juniper](https://docs.rs/juniper) and [diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an excercise in learning a Rust, the learning curve for which has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
+A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an exercise in learning Rust. The learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
 A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker deployment is forthcoming.
 
@@ -7,10 +7,10 @@ Feel free to take this project as a starting point for writing your own graphql 
 ## What's here
 ./src/db.rs -- wrapper for connecting to the database; configured for Mysql/Mariadb     
 ./src/graph_schema.rs -- graphql schema     
-./src/lib.rs -- things to build a crate as well as an executable    
+./src/lib.rs -- things to build a crate   
 ./src/main.rs -- actix web server init and run      
-./src/models.rs -- structs, methods, etc. for accessing the database using diesel ORM     
-./src/schema.rs -- database schema derived from diesel ORM and used by diesel calls     
+./src/models.rs -- all the stuff for accessing the database using Diesel ORM     
+./src/schema.rs -- database schema derived from Diesel CLI and used by Diesel calls     
 
 ## How to Run
 ### Step 1: Set-up your environment: 
