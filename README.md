@@ -4,7 +4,15 @@ A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) 
 A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker deployment is forthcoming.
 
 Feel free to take this project as a starting point for writing your own graphql service.
-## Building
+## What's here
+./src/db.rs -- wrapper for connecting to the database; configured for Mysql/Mariadb     
+./src/graph_schema.rs -- graphql schema     
+./src/lib.rs -- things to build a crate as well as an executable    
+./src/main.rs -- actix web server init and run      
+./src/models.rs -- structs, methods, etc. for accessing the database using diesel ORM     
+./src/schema.rs -- database schema derived from diesel ORM and used by diesel calls     
+
+## How to Run
 ### Step 1: Set-up your environment: 
 If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/tools/install) in your work environment as well as a recent version of [Mariadb](https://go.mariadb.com/download-mariadb-server-community.html?utm_source=google&utm_medium=ppc&utm_campaign=MKG-Search-Google-Branded-DL-NA-Server-DL&gclid=Cj0KCQjwvIT5BRCqARIsAAwwD-T-NRStQ4_3Ci8FyhdSYrsJWofpjOO5yKLxZ6NOGRqRHvdQxIAIjREaAtGWEALw_wcB)/[Mysql](https://www.mysql.com/downloads/)  
 ### Step 2: Clone this repo
