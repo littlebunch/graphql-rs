@@ -6,7 +6,7 @@ A running instance of the server is available at [rs.littlebunch.com](https://rs
 Feel free to take this project as a starting point for writing your own graphql service.
 ## What's here
 [./src/db.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/db.rs) -- wrapper for connecting to the database; configured for Mysql/Mariadb     
-[./src/graph_schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/graph_schema.rs) -- graphql schema     
+[./src/graphql_schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/graphql_schema.rs) -- graphql schema     
 [./src/lib.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/lib.rs) -- things to build a crate   
 [./src/main.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/main.rs) -- actix web server init and run      
 [./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
