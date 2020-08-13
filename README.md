@@ -1,16 +1,16 @@
 # graphql-rs
 A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an exercise in learning Rust. The learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
-A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker image is available on [docker hub](https://hub.docker.com/repository/docker/littlebunch/graphql-rs).
+A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker image is available on [docker hub](https://hub.docker.com/repository/docker/littlebunch/graphql-rs).  A recent dump of the database is available at [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz).
 
 Feel free to take this project as a starting point for writing your own graphql service.
 ## What's here
-./src/db.rs -- wrapper for connecting to the database; configured for Mysql/Mariadb     
-./src/graph_schema.rs -- graphql schema     
-./src/lib.rs -- things to build a crate   
-./src/main.rs -- actix web server init and run      
-./src/models.rs -- all the stuff for accessing the database using Diesel ORM     
-./src/schema.rs -- database schema derived from Diesel CLI and used by Diesel calls     
+[./src/db.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/db.rs) -- wrapper for connecting to the database; configured for Mysql/Mariadb     
+[./src/graphql_schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/graphql_schema.rs) -- graphql schema     
+[./src/lib.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/lib.rs) -- things to build a crate   
+[./src/main.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/main.rs) -- actix web server init and run      
+[./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
+[./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls     
 
 ## How to Build
 ### Step 1: Set-up your environment: 
@@ -23,7 +23,7 @@ git clone git@github.com:littlebunch/graphql-rs.git
 ### Step 1: Set-up the database
 You can build the schema from the ground-up using the [Diesel CLI](https://diesel.rs) or save yourself some time and use the dump of a recent version of the Branded Food Products database available on [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz) which you can download and create the database in your environment.
 ### Step 2: Start the service
-You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded start-up:
+You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded at start-up:
 
 ```
 DATABASE_URL=mysql://user:userpassword@localhost/bfpd
@@ -39,7 +39,7 @@ docker run --rm -it -p 8080:8080 --env-file=/full/path/to/.env littlebunch/graph
 ```
 The client will be available at  http://localhost:8080/graphiql.
 ## Sample Queries
-The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries: 
+The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries you can paste into the client: 
 #### Food UPC 000000018753 with all nutrient data:
 ```
 {
