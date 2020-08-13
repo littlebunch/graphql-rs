@@ -67,7 +67,8 @@ impl Food {
             .first::<Manufacturer>(conn)?;
         Ok(m.name)
     }
-    pub fn get_nutrient_data_by_nid(
+    //
+    pub fn get_nutrient_data(
         &self,
         nids: &Vec<String>,
         conn: &MysqlConnection,
@@ -75,34 +76,19 @@ impl Food {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
         use crate::schema::nutrients::dsl::*;
-        let data = nutrient_data
+        let data = match nids.len()  {
+            0 => nutrient_data
+            .filter(food_id.eq(&self.id))
+            .inner_join(nutrients)
+            .inner_join(derivations)
+            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
+            _ => nutrient_data
             .filter(food_id.eq(&self.id))
             .inner_join(nutrients)
             .filter(nutrientno.eq_any(nids))
             .inner_join(derivations)
-            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?;
-        let mut ndv: Vec<NutrientdataForm> = Vec::new();
-        for i in &data {
-            let (nd, n, d) = &i;
-            let ndf = NutrientdataForm::create((nd, n, d));
-            ndv.push(ndf);
-        }
-        Ok(ndv)
-    }
-
-    //
-    pub fn get_nutrient_data(
-        &self,
-        conn: &MysqlConnection,
-    ) -> Result<Vec<NutrientdataForm>, Box<dyn Error>> {
-        use crate::schema::derivations::dsl::*;
-        use crate::schema::nutrient_data::dsl::*;
-        use crate::schema::nutrients::dsl::*;
-        let data = nutrient_data
-            .filter(food_id.eq(&self.id))
-            .inner_join(nutrients)
-            .inner_join(derivations)
-            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?;
+            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
+        };
         let mut ndv: Vec<NutrientdataForm> = Vec::new();
         for i in &data {
             let (nd, n, d) = &i;

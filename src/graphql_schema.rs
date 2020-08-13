@@ -159,14 +159,8 @@ impl Foodview {
         for i in &fd {
             let f = &i;
             let mut fdv = Foodview::create(&f, &conn);
-            let nutform: Vec<NutrientdataForm> = match nids.len() {
-                0 => f
-                    .get_nutrient_data(&conn)
-                    .expect("error loading nutrient data"),
-                _ => f
-                    .get_nutrient_data_by_nid(nids, &conn)
-                    .expect("error loading nutrient data by nids"),
-            };
+            let nutform: Vec<NutrientdataForm> = f.get_nutrient_data(nids,&conn).expect("error loading nutrient data");
+           
             let mut ndv: Vec<Nutrientdataview> = Vec::new();
             for j in &nutform {
                 let nf = &j;
