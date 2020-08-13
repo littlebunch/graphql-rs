@@ -11,7 +11,9 @@ use std::error::Error;
 
 //extern crate serde_derive;
 use self::diesel::prelude::*;
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
+)]
 #[belongs_to(Manufacturer)]
 #[table_name = "foods"]
 
@@ -76,18 +78,18 @@ impl Food {
         use crate::schema::derivations::dsl::*;
         use crate::schema::nutrient_data::dsl::*;
         use crate::schema::nutrients::dsl::*;
-        let data = match nids.len()  {
+        let data = match nids.len() {
             0 => nutrient_data
-            .filter(food_id.eq(&self.id))
-            .inner_join(nutrients)
-            .inner_join(derivations)
-            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
+                .filter(food_id.eq(&self.id))
+                .inner_join(nutrients)
+                .inner_join(derivations)
+                .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
             _ => nutrient_data
-            .filter(food_id.eq(&self.id))
-            .inner_join(nutrients)
-            .filter(nutrientno.eq_any(nids))
-            .inner_join(derivations)
-            .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
+                .filter(food_id.eq(&self.id))
+                .inner_join(nutrients)
+                .filter(nutrientno.eq_any(nids))
+                .inner_join(derivations)
+                .load::<(Nutrientdata, Nutrient, Derivation)>(conn)?,
         };
         let mut ndv: Vec<NutrientdataForm> = Vec::new();
         for i in &data {
@@ -157,6 +159,23 @@ impl Manufacturer {
             name: String::from("Unknown"),
         }
     }
+    pub fn find_by_name(&self, conn: &MysqlConnection) -> Result<Manufacturer, Box<dyn Error>> {
+        use crate::schema::manufacturers::dsl::*;
+        let m = manufacturers
+            .filter(name.eq(&self.name))
+            .first::<Manufacturer>(conn)?;
+        Ok(m)
+    }
+}
+impl Get for Manufacturer {
+    type Item = Manufacturer;
+    type Conn = MysqlConnection;
+    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::manufacturers::dsl::*;
+        let mut data = vec![];
+        data = manufacturers.find(&self.id).load::<Manufacturer>(conn)?;
+        Ok(data)
+    }
 }
 
 #[derive(Queryable, Associations, Serialize, Deserialize, Debug)]
@@ -172,9 +191,28 @@ impl Foodgroup {
             description: String::from("Unknown"),
         }
     }
+    pub fn find_by_description(&self, conn: &MysqlConnection) -> Result<Foodgroup, Box<dyn Error>> {
+        use crate::schema::food_groups::dsl::*;
+        let fg = food_groups
+            .filter(description.eq(&self.description))
+            .first::<Foodgroup>(conn)?;
+        Ok(fg)
+    }
+}
+impl Get for Foodgroup {
+    type Item = Foodgroup;
+    type Conn = MysqlConnection;
+    fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::food_groups::dsl::*;
+        let mut data = vec![];
+        data = food_groups.find(&self.id).load::<Foodgroup>(conn)?;
+        Ok(data)
+    }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
+)]
 // Nutrient as in Calcium, Energy, etc, etc.
 pub struct Nutrient {
     pub id: i32,
@@ -229,7 +267,9 @@ impl Browse for Nutrient {
         Ok(data)
     }
 }
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
+)]
 #[belongs_to(Food)]
 #[belongs_to(Nutrient)]
 #[table_name = "nutrient_data"]
@@ -262,11 +302,13 @@ impl Nutrientdata {
 }
 
 // Derivations are descriptions of how a nutrient value was derived.
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(
+    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
+)]
 pub struct Derivation {
-    id: i32,
-    code: String,
-    description: String,
+    pub id: i32,
+    pub code: String,
+    pub description: String,
 }
 impl Derivation {
     pub fn new() -> Self {

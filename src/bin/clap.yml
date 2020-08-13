@@ -1,0 +1,26 @@
+name: "Branded Foods Input Utilty"
+version: "0.1.0"
+author: "Gary Moore <littlebunch@gmail.com>"
+about: "import bpfd csv into a data store"
+args:
+    - config:
+        short: c
+        long: config
+        value_name: CONFIG_FILE
+        help: "Read the YAML database configuration file"
+        takes_value: true
+        required: false
+    - path:
+        help: "Path to csv input files"
+        required: true
+        short: p
+        long: path
+        value_name: INPUT_PATH
+        takes_value: true
+    - type:
+        help: "Type of csv to import"
+        required: true
+        short: t
+        long: type
+        value_name: "[BFPD|NUT|DERV]"
+        takes_value: true
