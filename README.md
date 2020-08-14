@@ -12,7 +12,8 @@ Feel free to take this project as a starting point for writing your own graphql 
 [./src/main.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/main.rs) -- actix web server init and run      
 [./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
 [./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls     
-[./src/ingest-csv.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/bin/ingest-csv.rs) -- cli utility for importing the USDA csv files into the database
+[./src/bin/ingest-csv.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/bin/ingest-csv.rs) -- cli utility for importing the USDA csv files into the database    
+[./database/bfpd-schema.sql](https://github.com/littlebunch/graphql-rs/tree/master/database) -- the mysql schema for the database
 
 ## How to Build
 ### Step 1: Set-up your environment: 
@@ -23,7 +24,38 @@ git clone git@github.com:littlebunch/graphql-rs.git
 ```
 ## How to run
 ### Step 1: Set-up the database
-You can build the schema from the ground-up using the [Diesel CLI](https://diesel.rs) or save yourself some time and use the dump of a recent version of the Branded Food Products database available on [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz) which you can download and create the database in your environment.
+A couple of options:  1) You can build the database from the ground-up by importing the USDA csv files using the provided ingest-csv command line utility or 2) download a dump of a recent version of the Branded Food Products database from [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz) and create the database in your environment.    
+
+#### How to use the ingest-csv utility 
+This assumes you have access to a working instance of mariadb or mysql.  The utility is a first draft and assumes you are importing into an empty database.   
+
+1. Download and unzip the latest csv from the [FDC website](https://fdc.nal.usda.gov/download-datasets.html).  You will need the Branded Foods and Supporting data for All Downloads zip files.   
+
+2. Create an empty schema using the schema provided in database/bfpd-schema.sql. 
+```
+mysql -u user -p -e"create schema bfpd;"
+```
+```
+mysql -u user -p bfpd < database/bfpd-schema.sql
+````
+
+2. Build the command line utility:   
+```
+cargo build --bin ingest-csv
+```
+3. Load the nutrients and derivation tables   
+```
+./target/debug/ingest-cvs -t NUT -p /path/to/csv/nutrient.csv
+```
+```
+./target/debug/ingest-cvs -t DERV -p /path/to/csv/food_nutrient_derivation.csv
+```
+4. Load the food csv tables   
+```
+./target/debug/ingest-cvs -t DERV -p /path/to/csv/
+```
+The load takes about 10 minutes on my 2015 vintage MBP.  
+
 ### Step 2: Start the service
 You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded at start-up:
 
