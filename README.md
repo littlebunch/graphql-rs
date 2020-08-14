@@ -64,7 +64,7 @@ GRAPHIQL_URL=http://localhost:8080/graphql
 ```
 Then run the server from the project root (the path where cargo.toml is located) if you are building:
 ```
-cargo run
+cargo run --bin graphql-rs
 ```
 or start a Docker instance:
 ```
