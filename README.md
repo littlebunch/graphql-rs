@@ -29,7 +29,13 @@ A couple of options:  1) You can build the database from the ground-up by import
 #### How to use the ingest-csv utility 
 This assumes you have access to a working instance of mariadb or mysql.  The utility is a first draft and assumes you are importing into an empty database.   
 
-1. Download and unzip the latest csv from the [FDC website](https://fdc.nal.usda.gov/download-datasets.html).  You will need the Branded Foods and Supporting data for All Downloads zip files.   
+1. Download and unzip the latest csv from the [FDC website](https://fdc.nal.usda.gov/download-datasets.html) into a directory of your choice.  You will need the Branded Foods and Supporting data for All Downloads zip files:
+```
+wget https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_branded_food_csv_2020-04-29.zip
+```
+```
+wget https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_Supporting_Data_csv_2020-04-29.zip
+```
 
 2. Create an empty schema using the schema provided in database/bfpd-schema.sql. 
 ```
@@ -41,20 +47,13 @@ mysql -u user -p bfpd < database/bfpd-schema.sql
 
 2. Build the command line utility:   
 ```
-cargo build --bin ingest-csv
+cargo build --release --bin ingest-csv
 ```
-3. Load the nutrients and derivation tables   
+3. Load the data by pointing the program to the full path containing the csv:
 ```
-./target/debug/ingest-cvs -t NUT -p /path/to/csv/nutrient.csv
+./target/release/ingest-cvs -p /path/to/csv/
 ```
-```
-./target/debug/ingest-cvs -t DERV -p /path/to/csv/food_nutrient_derivation.csv
-```
-4. Load the food csv tables   
-```
-./target/debug/ingest-cvs -t DERV -p /path/to/csv/
-```
-The load takes about 10 minutes on my 2015 vintage MBP.  
+The load takes about 8 minutes on my 2015 vintage MBP.  
 
 ### Step 2: Start the service
 You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded at start-up:
