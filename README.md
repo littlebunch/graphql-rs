@@ -5,12 +5,14 @@ A running instance of the server is available at [rs.littlebunch.com](https://rs
 
 Feel free to take this project as a starting point for writing your own graphql service.
 ## What's here
+[./src/cvs.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/csv.rs) -- module used by the ingest utility for importing the UDSA csv files into the database.
 [./src/db.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/db.rs) -- wrapper for connecting to the database; configured for Mysql/Mariadb     
 [./src/graphql_schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/graphql_schema.rs) -- graphql schema     
 [./src/lib.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/lib.rs) -- things to build a crate   
 [./src/main.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/main.rs) -- actix web server init and run      
 [./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
-[./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls     
+[./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls 
+[./src/ingest-csv.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/bin/ingest-csv.rs) -- cli utility for importing the USDA csv files into the database
 
 ## How to Build
 ### Step 1: Set-up your environment: 
