@@ -92,10 +92,10 @@ The nice thing about graphql is that it's self-documenting as illustrated by the
   }
 }
 ```
-#### Food UPC 000000018753 with nutrient data for Calcium (nutrient nbr = 301):
+#### Food UPC 000000018753 with nutrient data for Energy (Calories) (nutrient nbr = 208):
 ```
 {
-  food(fid:"000000018753", nids: ["301"]) {
+  food(fid:"000000018753", nids: ["208"]) {
     upc
     description
     servingSize
