@@ -271,7 +271,6 @@ impl Foodcsv {
                 .values(description.eq(fg.description))
                 .execute(conn)?;
             i = self.create_foodgroup_id(conn)?;
-            println!("fg id={}", i);
         }
         Ok(i)
     }
