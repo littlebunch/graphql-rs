@@ -32,11 +32,11 @@ pub fn main() {
     let csvtype = matches.value_of("type").unwrap();
     let path = matches.value_of("path").unwrap();
     match csvtype {
-        "BFPD" => {
+        "FOOD" => {
             let mut count: usize = 0;
-            /*println!("Loading foods");
+            println!("Loading foods");
             count = process_foods(path.to_string(), &conn);
-            println!("Finished. {} foods loaded.", count);*/
+            println!("Finished. {} foods loaded.", count);
             println!("Now loading nutrient data.");
             count = process_nutdata(path.to_string(), &conn);
             println!("Finished. {} nutrient data.", count)
