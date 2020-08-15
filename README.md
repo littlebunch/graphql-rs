@@ -26,7 +26,11 @@ git clone git@github.com:littlebunch/graphql-rs.git
 ```
 cargo build --release
 ```
-This will create 2 programs in the ./target/release directory:  ingest-csv and graphql-rs.  The former is the cli utility for importing USDA csv into the database and the latter is the graphql server.   
+This will create the graphql-rs server in the ./target/release directory.  If you are importing USDA csv, then build the cli utility for doing that:
+
+```
+cargo build --release --bin ingest-csv
+```
 
 ## How to run
 ### Step 1: Set-up the database
