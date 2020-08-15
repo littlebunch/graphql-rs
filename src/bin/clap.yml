@@ -12,7 +12,7 @@ args:
         takes_value: true
     - type:
         help: "Type of csv to import"
-        required: true
+        required: false
         short: t
         long: type
         value_name: "[FOOD|NUT|DERV]"

@@ -428,7 +428,8 @@ impl Nutcsv {
 /// Inserts nutrients csv into the database
 pub fn process_nutrients(path: String, conn: &MysqlConnection) -> usize {
     use crate::schema::nutrients::dsl::*;
-    let recs = match read_from_file(&path) {
+    let nutfile = format!("{}{}", path, "nutrient.csv");
+    let recs = match read_from_file(&nutfile) {
         Ok(data) => data.records,
         Err(e) => {
             eprintln!("{}", e);
@@ -466,7 +467,8 @@ impl Dervcsv {
 /// Inserts derivation csv into the database
 pub fn process_derivations(path: String, conn: &MysqlConnection) -> usize {
     use crate::schema::derivations::dsl::*;
-    let recs = match read_from_file(&path) {
+    let dervfile=format!("{}{}",path,"food_nutrient_derivation.csv");
+    let recs = match read_from_file(&dervfile) {
         Ok(data) => data.records,
         Err(e) => {
             eprintln!("{}", e);
