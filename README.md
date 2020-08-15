@@ -22,6 +22,12 @@ If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/t
 ```
 git clone git@github.com:littlebunch/graphql-rs.git
 ```
+### Step 3: Build the binaries
+```
+cargo build --release
+```
+This will create 2 programs in the ./target/release directory:  ingest-csv and graphql-rs.  The former is the cli utility for importing USDA csv into the database and the latter is the graphql server.   
+
 ## How to run
 ### Step 1: Set-up the database
 A couple of options:  1) You can build the database from the ground-up by importing the USDA csv files using the provided ingest-csv command line utility or 2) download a dump of a recent version of the Branded Food Products database from [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz) and create the database in your environment.    
@@ -45,10 +51,6 @@ mysql -u user -p -e"create schema bfpd;"
 mysql -u user -p bfpd < database/bfpd-schema.sql
 ````
 
-2. Build the command line utility:   
-```
-cargo build --release --bin ingest-csv
-```
 3. Load the data by pointing the program to the full path containing the csv:
 ```
 ./target/release/ingest-cvs -p /path/to/csv/
@@ -62,9 +64,9 @@ You need to set a couple of environment variables.  It generally makes sense to 
 DATABASE_URL=mysql://user:userpassword@localhost/bfpd
 GRAPHIQL_URL=http://localhost:8080/graphql
 ```
-Then run the server from the project root (the path where cargo.toml is located) if you are building:
+Then run the server from the project root (the path where cargo.toml is located):
 ```
-cargo run --bin graphql-rs
+./target/release/graphql-rs
 ```
 or start a Docker instance:
 ```
