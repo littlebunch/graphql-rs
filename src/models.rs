@@ -136,8 +136,8 @@ impl Browse for Food {
                     _ => q.order(Box::new(description.asc())),
                 },
             "upc" => q = match &*order {
-                "desc" => q.order(Box::new(description.desc())),
-                _ => q.order(Box::new(description.asc())),
+                "desc" => q.order(Box::new(upc.desc())),
+                _ => q.order(Box::new(upc.asc())),
             },
             "fdcId" => q =match &*order {
                 "desc" => q.order(Box::new(fdc_id.desc())),
@@ -237,7 +237,7 @@ impl Browse for Foodgroup {
             },
             _ => q = match &*order {
                 "desc" => q.order(Box::new(id.desc())),
-                _ => q.order(Box::new(description.asc()))
+                _ => q.order(Box::new(id.asc()))
             },
         };
         q = q.limit(max).offset(off);
@@ -293,11 +293,11 @@ impl Browse for Nutrient {
         use crate::schema::nutrients::dsl::*;
         let mut q = nutrients.into_boxed();
         match &*sort {
-            "description" => q = match &*order {
+            "name" => q = match &*order {
                 "desc"=>q.order(Box::new(description.desc())),
                 _ => q.order(Box::new(description.asc())),
             },
-            "no" => q = match &*order {
+            "nbr" => q = match &*order {
                 "desc"=>q.order(Box::new(nutrientno.desc())),
                 _ => q.order(Box::new(nutrientno.asc())),
             },
