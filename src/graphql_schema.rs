@@ -28,6 +28,7 @@ impl QueryRoot {
         mut max: i32,
         mut offset: i32,
         mut sort: String,
+        mut order: String,
         nids: Vec<String>,
     ) -> Vec<Foodview> {
         let conn = context.db.get().unwrap();
@@ -39,7 +40,7 @@ impl QueryRoot {
         }
         let food = Food::new();
         let data = food
-            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .browse(max as i64, offset as i64, sort, order, &conn)
             .expect("error loading foods");
         Foodview::build_view(data, &nids, &conn)
     }
@@ -73,6 +74,7 @@ impl QueryRoot {
         mut max: i32,
         mut offset: i32,
         mut sort: String,
+        mut order: String,
         nids: Vec<String>,
     ) -> Vec<Nutrientview> {
         let conn = context.db.get().unwrap();
@@ -84,7 +86,7 @@ impl QueryRoot {
         }
         let n = Nutrient::new();
         let data = n
-            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .browse(max as i64, offset as i64, sort, order, &conn)
             .expect("error loading nutrients");
         let mut nv: Vec<Nutrientview> = Vec::new();
         for i in &data {
@@ -98,6 +100,7 @@ impl QueryRoot {
         mut max: i32,
         mut offset: i32,
         mut sort: String,
+        order: String,
     ) -> Vec<FoodgroupView> {
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
@@ -108,7 +111,7 @@ impl QueryRoot {
         }
         let fg = Foodgroup::new();
         let data = fg
-            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .browse(max as i64, offset as i64, sort, order, &conn)
             .expect("error loading nutrients");
         let mut fgv: Vec<FoodgroupView> = Vec::new();
         for i in &data {
