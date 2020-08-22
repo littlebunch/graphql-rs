@@ -3,16 +3,15 @@ extern crate serde;
 #[macro_use]
 extern crate clap;
 
-
 use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
 use std::env;
 
-use clap::App;
-use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
-use diesel::mysql::MysqlConnection;
 use crate::diesel::Connection;
+use clap::App;
+use diesel::mysql::MysqlConnection;
+use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
 use std::process;
+use std::error::Error;
 
 fn establish_connection() -> MysqlConnection {
     dotenv().ok();
@@ -20,19 +19,16 @@ fn establish_connection() -> MysqlConnection {
     MysqlConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
 }
-//#[derive(Debug, Serialize, Deserialize)]
-///
-///  rudimentary implementation of query
-pub fn main() {
+fn run() -> Result<usize, Box<dyn Error>> {
     let conn = establish_connection();
     let cli = load_yaml!("clap.yml");
     let matches = App::from_yaml(cli).get_matches();
     let mut csvtype = matches.value_of("type").unwrap_or_default();
     let path = matches.value_of("path").unwrap();
     if csvtype.len() == 0 {
-        csvtype="ALL"
+        csvtype = "ALL"
     }
-    let mut count: usize=0;
+    let mut count: usize = 0;
     match csvtype {
         "FOOD" => {
             println!("Loading foods");
@@ -65,9 +61,22 @@ pub fn main() {
         }
         _ => {
             println!("invalid input type");
-            process::exit(1)
         }
     }
-
+        Ok(count)
+}
+//#[derive(Debug, Serialize, Deserialize)]
+///
+///  rudimentary implementation of query
+fn main() {
+    match run() {
+        Ok(_count) => {
+            println!("Finished.");
+        }
+        Err(err) => {
+            println!("{}", err);
+            process::exit(1);
+        }
+    }
     process::exit(0)
 }

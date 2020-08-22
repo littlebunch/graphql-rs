@@ -3,7 +3,7 @@ extern crate diesel;
 extern crate dotenv;
 extern crate juniper;
 extern crate serde_derive;
-use actix_web::{http, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{web, App, Error, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use futures::future::Future;
 use juniper::http::graphiql::graphiql_source;
@@ -21,7 +21,7 @@ use crate::graphql_schema::{create_schema, Context, Schema};
 fn graphiql() -> HttpResponse {
     let url = match env::var("GRAPHIQL_URL") {
         Ok(x) => x,
-        Err(e) => "http://localhost:8080/graphql".to_string(),
+        Err(_e) => "http://localhost:8080/graphql".to_string(),
     };
     //let html = graphiql_source("http://localhost:8080/graphql");
     let html = graphiql_source(&url);

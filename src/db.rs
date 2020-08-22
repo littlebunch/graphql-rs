@@ -1,13 +1,10 @@
 extern crate diesel;
-use dotenv::dotenv;
 use std::env;
 
-use crate::diesel::Connection;
 use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
+use diesel::r2d2::{ConnectionManager, Pool, PoolError};
 
 pub type MysqlPool = Pool<ConnectionManager<MysqlConnection>>;
-pub type MySqlPooledConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
 
 fn init(database_url: &str) -> Result<MysqlPool, PoolError> {
     let manager = ConnectionManager::<MysqlConnection>::new(database_url);

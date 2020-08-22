@@ -3,14 +3,13 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 use crate::db::MysqlPool;
-use crate::schema::{derivations, food_groups, foods, manufacturers, nutrient_data, nutrients};
-use chrono::{NaiveDate, NaiveDateTime};
+//use crate::schema::{derivations, food_groups, foods, manufacturers, nutrient_data, nutrients};
+//use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
 use graphql_rs::Browse;
 use graphql_rs::Get;
 use juniper::RootNode;
-use std::option;
 const MAX_RECS: i32 = 150;
 
 #[derive(Clone)]
@@ -31,7 +30,6 @@ impl QueryRoot {
         mut sort: String,
         nids: Vec<String>,
     ) -> Vec<Foodview> {
-        use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
             max = MAX_RECS;
@@ -59,7 +57,6 @@ impl QueryRoot {
         Foodview::build_view(data, &nids, &conn)
     }
     fn nutrient(context: &Context, nno: String) -> Vec<Nutrientview> {
-        use crate::schema::nutrients::dsl::*;
         let conn = context.db.get().unwrap();
         let mut n = Nutrient::new();
         n.nutrientno = nno;
@@ -78,7 +75,6 @@ impl QueryRoot {
         mut sort: String,
         nids: Vec<String>,
     ) -> Vec<Nutrientview> {
-        use crate::schema::foods::dsl::*;
         let conn = context.db.get().unwrap();
         if max > MAX_RECS {
             max = MAX_RECS;
@@ -96,6 +92,30 @@ impl QueryRoot {
             nv.push(Nutrientview::create(nv1));
         }
         nv
+    }
+    fn food_groups(
+        context: &Context,
+        mut max: i32,
+        mut offset: i32,
+        mut sort: String,
+    ) -> Vec<FoodgroupView> {
+        let conn = context.db.get().unwrap();
+        if max > MAX_RECS {
+            max = MAX_RECS;
+        }
+        if offset < 0 {
+            offset = 0;
+        }
+        let fg = Foodgroup::new();
+        let data = fg
+            .browse(max as i64, offset as i64, sort, String::from("asc"), &conn)
+            .expect("error loading nutrients");
+        let mut fgv: Vec<FoodgroupView> = Vec::new();
+        for i in &data {
+            let fgv1 = &i;
+            fgv.push(FoodgroupView::create(fgv1));
+        }
+        fgv
     }
 }
 pub struct MutationRoot;
@@ -264,8 +284,25 @@ pub struct Derivationview {
     description: String,
 }
 #[derive(juniper::GraphQLObject, Debug)]
+#[graphql(description = "The category assigned to a food")]
+pub struct FoodgroupView {
+    #[graphql(description = "A unique code identifying a food group")]
+    pub id: i32,
+    #[graphql(description = "Food group name")]
+    pub group: String,
+}
+impl FoodgroupView {
+    fn create(fg: &Foodgroup) -> Self {
+        Self {
+            id: fg.id,
+            group: fg.description.to_string(),
+        }
+    }
+}
+
+#[derive(juniper::GraphQLObject, Debug)]
 #[graphql(
-    description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human healt"
+    description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human health"
 )]
 pub struct Nutrientview {
     #[graphql(description = "A unique code identifying a nutrient or food constituent")]

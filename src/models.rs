@@ -105,7 +105,7 @@ impl Get for Food {
     type Conn = MysqlConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::foods::dsl::*;
-        let mut data = vec![];
+        let data;
         if self.upc != "unknown" {
             data = foods.filter(upc.eq(&self.upc)).load::<Food>(conn)?;
         } else if self.id > 0 {
@@ -130,10 +130,23 @@ impl Browse for Food {
         use crate::schema::foods::dsl::*;
         let mut q = foods.into_boxed();
         match &*sort {
-            "description" => q = q.order(Box::new(description.asc())),
-            "upc" => q = q.order(Box::new(upc.asc())),
-            "fdcId" => q = q.order(Box::new(fdc_id.asc())),
-            _ => q = q.order(Box::new(id.asc())),
+            "description" => q = 
+                match &*order {
+                    "desc" => q.order(Box::new(description.desc())),
+                    _ => q.order(Box::new(description.asc())),
+                },
+            "upc" => q = match &*order {
+                "desc" => q.order(Box::new(description.desc())),
+                _ => q.order(Box::new(description.asc())),
+            },
+            "fdcId" => q =match &*order {
+                "desc" => q.order(Box::new(fdc_id.desc())),
+                _ => q.order(Box::new(fdc_id.asc())),
+            },
+            _ => q = match &*order {
+                "desc" => q.order(Box::new(id.desc())),
+                _ => q.order(Box::new(id.asc())),
+            },
         };
         q = q.limit(max).offset(off);
         // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
@@ -142,9 +155,6 @@ impl Browse for Food {
         Ok(data)
     }
 }
-use crate::schema::food_groups::dsl::*;
-use crate::schema::foods::dsl::*;
-use crate::schema::manufacturers::dsl::*;
 
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 #[table_name = "manufacturers"]
@@ -171,9 +181,8 @@ impl Get for Manufacturer {
     type Item = Manufacturer;
     type Conn = MysqlConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
-        use crate::schema::manufacturers::dsl::*;
-        let mut data = vec![];
-        data = manufacturers.find(&self.id).load::<Manufacturer>(conn)?;
+    use crate::schema::manufacturers::dsl::*;
+        let data = manufacturers.find(&self.id).load::<Manufacturer>(conn)?;
         Ok(data)
     }
 }
@@ -204,8 +213,37 @@ impl Get for Foodgroup {
     type Conn = MysqlConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::food_groups::dsl::*;
-        let mut data = vec![];
-        data = food_groups.find(&self.id).load::<Foodgroup>(conn)?;
+        let data = food_groups.find(&self.id).load::<Foodgroup>(conn)?;
+        Ok(data)
+    }
+}
+impl Browse for Foodgroup {
+    type Item = Foodgroup;
+    type Conn = MysqlConnection;
+    fn browse(
+        &self,
+        max: i64,
+        off: i64,
+        sort: String,
+        order: String,
+        conn: &Self::Conn,
+    ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::food_groups::dsl::*;
+        let mut q = food_groups.into_boxed();
+        match &*sort {
+            "group" => q = match &*order {
+                "desc"=>q.order(Box::new(description.desc())),
+                _ => q.order(Box::new(description.asc()))
+            },
+            _ => q = match &*order {
+                "desc" => q.order(Box::new(id.desc())),
+                _ => q.order(Box::new(description.asc()))
+            },
+        };
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Foodgroup>(conn)?;
         Ok(data)
     }
 }
@@ -235,8 +273,7 @@ impl Get for Nutrient {
     type Conn = MysqlConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::nutrients::dsl::*;
-        let mut data = vec![];
-        data = nutrients
+        let data = nutrients
             .filter(nutrientno.eq(&self.nutrientno))
             .load::<Nutrient>(conn)?;
         Ok(data)
@@ -256,9 +293,18 @@ impl Browse for Nutrient {
         use crate::schema::nutrients::dsl::*;
         let mut q = nutrients.into_boxed();
         match &*sort {
-            "description" => q = q.order(Box::new(description.asc())),
-            "no" => q = q.order(Box::new(nutrientno.asc())),
-            _ => q = q.order(Box::new(id.asc())),
+            "description" => q = match &*order {
+                "desc"=>q.order(Box::new(description.desc())),
+                _ => q.order(Box::new(description.asc())),
+            },
+            "no" => q = match &*order {
+                "desc"=>q.order(Box::new(nutrientno.desc())),
+                _ => q.order(Box::new(nutrientno.asc())),
+            },
+            _ => q = match &*order {
+                "desc"=>q.order(Box::new(id.desc())),
+                _ => q.order(Box::new(id.asc())),
+            }
         };
         q = q.limit(max).offset(off);
         // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
