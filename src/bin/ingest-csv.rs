@@ -13,12 +13,14 @@ use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, proce
 use std::process;
 use std::error::Error;
 
+
 fn establish_connection() -> MysqlConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("Bad url");
     MysqlConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
 }
+/// imports USDA csv files into the database
 fn run() -> Result<usize, Box<dyn Error>> {
     let conn = establish_connection();
     let cli = load_yaml!("clap.yml");
@@ -33,31 +35,31 @@ fn run() -> Result<usize, Box<dyn Error>> {
         "FOOD" => {
             println!("Loading foods");
             count = process_foods(path.to_string(), &conn);
-            println!("Finished. {} foods loaded.", count);
+            println!("Finished foods.");
             println!("Now loading nutrient data.");
-            count = process_nutdata(path.to_string(), &conn);
-            println!("Finished. {} nutrient data.", count)
+            count += process_nutdata(path.to_string(), &conn);
+            println!("Finished nutrient data.")
         }
         "NUT" => {
             count = process_nutrients(path.to_string(), &conn);
-            println!("Finished.  {} nutrients loaded", count);
+            println!("Finished nutrients");
         }
         "DERV" => {
             count = process_derivations(path.to_string(), &conn);
-            println!("Finished.  {} derivations loaded", count);
+            println!("Finished derivations");
         }
         "ALL" => {
             println!("Starting csv load");
             count = process_nutrients(path.to_string(), &conn);
             println!("Finished.  {} nutrients loaded", count);
-            count = process_derivations(path.to_string(), &conn);
-            println!("Finished.  {} derivations loaded", count);
+            count += process_derivations(path.to_string(), &conn);
+            println!("Finished derivations");
             println!("Loading foods");
-            count = process_foods(path.to_string(), &conn);
-            println!("Finished. {} foods loaded.", count);
+            count += process_foods(path.to_string(), &conn);
+            println!("Finished foods.");
             println!("Now loading nutrient data.");
-            count = process_nutdata(path.to_string(), &conn);
-            println!("Finished. {} nutrient data.", count)
+            count += process_nutdata(path.to_string(), &conn);
+            println!("Finished nutrient data.")
         }
         _ => {
             println!("invalid input type");
@@ -67,11 +69,10 @@ fn run() -> Result<usize, Box<dyn Error>> {
 }
 //#[derive(Debug, Serialize, Deserialize)]
 ///
-///  rudimentary implementation of query
 fn main() {
     match run() {
-        Ok(_count) => {
-            println!("Finished.");
+        Ok(count) => {
+            println!("Finished. {} total records loaded",count);
         }
         Err(err) => {
             println!("{}", err);
