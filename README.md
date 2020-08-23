@@ -139,14 +139,14 @@ The nice thing about graphql is that it's self-documenting as illustrated by the
 #### List nutrients sorted ascending by name:
 ```
 {
-  nutrients(max:100,offset:0,sort:"name",order:"asc") {
+  nutrients(max: 100, offset: 0, sort: "name", order: "asc", nids: []) {
     nbr
     name
     unit
   }
 }
 ```
-### List food groups sorted ascending by groupt:
+### List food groups sorted ascending by group:
 ```
 {
   foodGroups(max:125,offset:0,sort:"group",order:"asc") {
