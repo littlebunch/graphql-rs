@@ -117,15 +117,41 @@ The nice thing about graphql is that it's self-documenting as illustrated by the
   }
 }
 ```
-#### Browse foods, ordered by food name:
+#### Browse foods, sorted descending by food name:
 ```
 {
-  foods(max: 150, offset: 0, sort: "description", nids: []) {
+  foods(max: 150, offset: 0, sort: "description", order:"desc", nids: []) {
     upc
     description
     manufacturer
     food
     ingredients
     foodGroup
+    nutrientData {
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
   }
 }
+```
+#### List nutrients sorted ascending by name:
+```
+{
+  nutrients(max:100,offset:0,sort:"name",order:"asc") {
+    nbr
+    name
+    unit
+  }
+}
+```
+### List food groups sorted ascending by groupt:
+```
+{
+  foodGroups(max:125,offset:0,sort:"group",order:"asc") {
+    id
+    group
+  }
+}
+```
