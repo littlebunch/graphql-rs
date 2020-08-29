@@ -1,22 +1,17 @@
 extern crate diesel;
 
+use self::diesel::prelude::*;
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
 use crate::Browse;
 use crate::Get;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
 use std::error::Error;
-//extern crate serde;
-//extern crate serde_json;
-
-//extern crate serde_derive;
-use self::diesel::prelude::*;
 #[derive(
     Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
 )]
 #[belongs_to(Manufacturer)]
 #[table_name = "foods"]
-
 pub struct Food {
     pub id: i32,
     pub publication_date: NaiveDateTime,
@@ -130,23 +125,30 @@ impl Browse for Food {
         use crate::schema::foods::dsl::*;
         let mut q = foods.into_boxed();
         match &*sort {
-            "description" => q = 
-                match &*order {
+            "description" => {
+                q = match &*order {
                     "desc" => q.order(Box::new(description.desc())),
                     _ => q.order(Box::new(description.asc())),
-                },
-            "upc" => q = match &*order {
-                "desc" => q.order(Box::new(upc.desc())),
-                _ => q.order(Box::new(upc.asc())),
-            },
-            "fdcId" => q =match &*order {
-                "desc" => q.order(Box::new(fdc_id.desc())),
-                _ => q.order(Box::new(fdc_id.asc())),
-            },
-            _ => q = match &*order {
-                "desc" => q.order(Box::new(id.desc())),
-                _ => q.order(Box::new(id.asc())),
-            },
+                }
+            }
+            "upc" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(upc.desc())),
+                    _ => q.order(Box::new(upc.asc())),
+                }
+            }
+            "fdcId" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(fdc_id.desc())),
+                    _ => q.order(Box::new(fdc_id.asc())),
+                }
+            }
+            _ => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
+            }
         };
         q = q.limit(max).offset(off);
         // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
@@ -181,7 +183,7 @@ impl Get for Manufacturer {
     type Item = Manufacturer;
     type Conn = MysqlConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
-    use crate::schema::manufacturers::dsl::*;
+        use crate::schema::manufacturers::dsl::*;
         let data = manufacturers.find(&self.id).load::<Manufacturer>(conn)?;
         Ok(data)
     }
@@ -231,14 +233,18 @@ impl Browse for Foodgroup {
         use crate::schema::food_groups::dsl::*;
         let mut q = food_groups.into_boxed();
         match &*sort {
-            "group" => q = match &*order {
-                "desc"=>q.order(Box::new(description.desc())),
-                _ => q.order(Box::new(description.asc()))
-            },
-            _ => q = match &*order {
-                "desc" => q.order(Box::new(id.desc())),
-                _ => q.order(Box::new(id.asc()))
-            },
+            "group" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(description.desc())),
+                    _ => q.order(Box::new(description.asc())),
+                }
+            }
+            _ => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
+            }
         };
         q = q.limit(max).offset(off);
         // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
@@ -293,17 +299,23 @@ impl Browse for Nutrient {
         use crate::schema::nutrients::dsl::*;
         let mut q = nutrients.into_boxed();
         match &*sort {
-            "name" => q = match &*order {
-                "desc"=>q.order(Box::new(description.desc())),
-                _ => q.order(Box::new(description.asc())),
-            },
-            "nbr" => q = match &*order {
-                "desc"=>q.order(Box::new(nutrientno.desc())),
-                _ => q.order(Box::new(nutrientno.asc())),
-            },
-            _ => q = match &*order {
-                "desc"=>q.order(Box::new(id.desc())),
-                _ => q.order(Box::new(id.asc())),
+            "name" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(description.desc())),
+                    _ => q.order(Box::new(description.asc())),
+                }
+            }
+            "nbr" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(nutrientno.desc())),
+                    _ => q.order(Box::new(nutrientno.asc())),
+                }
+            }
+            _ => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
             }
         };
         q = q.limit(max).offset(off);

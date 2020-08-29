@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
-extern crate juniper;
 extern crate serde_derive;
 use actix_web::{web, App, Error, HttpResponse, HttpServer};
 use dotenv::dotenv;

@@ -2,7 +2,7 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::models::{Derivation, Food, Foodgroup, Manufacturer, Nutrient, Nutrientdata};
 use crate::Get;
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use csv::{Reader, StringRecord};
 use diesel::dsl::insert_into;
 use diesel::mysql::MysqlConnection;
@@ -413,7 +413,7 @@ pub fn process_nutrients(path: String, conn: &MysqlConnection) -> usize {
     use crate::schema::nutrients::dsl::*;
     let nutfile = format!("{}{}", path, "nutrient.csv");
     let recs = match read_from_file(&nutfile) {
-      Ok(data) => data.records,
+        Ok(data) => data.records,
         Err(e) => {
             eprintln!("{}", e);
             process::exit(1);

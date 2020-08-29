@@ -10,9 +10,8 @@ use crate::diesel::Connection;
 use clap::App;
 use diesel::mysql::MysqlConnection;
 use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
-use std::process;
 use std::error::Error;
-
+use std::process;
 
 fn establish_connection() -> MysqlConnection {
     dotenv().ok();
@@ -65,14 +64,14 @@ fn run() -> Result<usize, Box<dyn Error>> {
             println!("invalid input type");
         }
     }
-        Ok(count)
+    Ok(count)
 }
 //#[derive(Debug, Serialize, Deserialize)]
 ///
 fn main() {
     match run() {
         Ok(count) => {
-            println!("Finished. {} total records loaded",count);
+            println!("Finished. {} total records loaded", count);
         }
         Err(err) => {
             println!("{}", err);

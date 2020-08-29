@@ -3,13 +3,11 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 use crate::db::MysqlPool;
-//use crate::schema::{derivations, food_groups, foods, manufacturers, nutrient_data, nutrients};
-//use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
 use graphql_rs::Browse;
 use graphql_rs::Get;
-use juniper::RootNode;
+use juniper::{graphql_value, IntoFieldError,FieldError, FieldResult, RootNode};
 const MAX_RECS: i32 = 150;
 
 #[derive(Clone)]
@@ -20,7 +18,29 @@ pub struct Context {
 impl juniper::Context for Context {}
 
 pub struct QueryRoot;
+enum CustomError {
+    MaxValidationError,
+    InvalidOffsetError,
+}
 
+impl juniper::IntoFieldError for CustomError {
+    fn into_field_error(self) -> FieldError {
+        match self {
+            CustomError::MaxValidationError => FieldError::new(
+                format!("max parameter exceeds allowed amounts.  Enter 1 to {}",MAX_RECS),
+                graphql_value!({
+                    "type": "MAX_ERROR"
+                }),
+            ),
+            CustomError::InvalidOffsetError => FieldError::new(
+                "offset parameter must be greater than 1",
+                graphql_value!({
+                    "type": "OFFSET_ERROR"
+                }),
+            ),
+        }
+    }
+}
 #[juniper::object(Context = Context)]
 impl QueryRoot {
     fn foods(
@@ -30,21 +50,19 @@ impl QueryRoot {
         mut sort: String,
         mut order: String,
         nids: Vec<String>,
-    ) -> Vec<Foodview> {
+    ) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
-        if max > MAX_RECS {
-            max = MAX_RECS;
+        if max > MAX_RECS || max < 1 {
+            return Err(CustomError::MaxValidationError.into_field_error())
         }
         if offset < 0 {
-            offset = 0;
+            return  Err(CustomError::InvalidOffsetError.into_field_error())
         }
         let food = Food::new();
-        let data = food
-            .browse(max as i64, offset as i64, sort, order, &conn)
-            .expect("error loading foods");
-        Foodview::build_view(data, &nids, &conn)
+        let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
+        Ok(Foodview::build_view(data, &nids, &conn))
     }
-    fn food(context: &Context, fid: String, nids: Vec<String>) -> Vec<Foodview> {
+    fn food(context: &Context, fid: String, nids: Vec<String>) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
 
@@ -54,20 +72,20 @@ impl QueryRoot {
             food.fdc_id = fid;
         }
 
-        let data = food.get(&conn).expect("error loading food");
-        Foodview::build_view(data, &nids, &conn)
+        let data = food.get(&conn)?;
+        Ok(Foodview::build_view(data, &nids, &conn))
     }
-    fn nutrient(context: &Context, nno: String) -> Vec<Nutrientview> {
+    fn nutrient(context: &Context, nno: String) -> FieldResult<Vec<Nutrientview>> {
         let conn = context.db.get().unwrap();
         let mut n = Nutrient::new();
         n.nutrientno = nno;
-        let nut = n.get(&conn).unwrap();
+        let nut = n.get(&conn)?;
         let mut nv: Vec<Nutrientview> = Vec::new();
         for i in &nut {
             let nv1 = &i;
             nv.push(Nutrientview::create(nv1));
         }
-        nv
+        Ok(nv)
     }
     fn nutrients(
         context: &Context,
@@ -76,49 +94,49 @@ impl QueryRoot {
         mut sort: String,
         mut order: String,
         nids: Vec<String>,
-    ) -> Vec<Nutrientview> {
-        let conn = context.db.get().unwrap();
-        if max > MAX_RECS {
-            max = MAX_RECS;
+    ) -> FieldResult<Vec<Nutrientview>> {
+        let conn = context.db.get()?;
+        let mut b = false;
+        if max > MAX_RECS || max < 1 {
+           return Err(CustomError::MaxValidationError.into_field_error())
         }
         if offset < 0 {
-            offset = 0;
+            return  Err(CustomError::InvalidOffsetError.into_field_error())
         }
         let n = Nutrient::new();
-        let data = n
-            .browse(max as i64, offset as i64, sort, order, &conn)
-            .expect("error loading nutrients");
+
+        let data = n.browse(max as i64, offset as i64, sort, order, &conn)?;
         let mut nv: Vec<Nutrientview> = Vec::new();
         for i in &data {
             let nv1 = &i;
             nv.push(Nutrientview::create(nv1));
         }
-        nv
+
+        Ok(nv)
     }
+
     fn food_groups(
         context: &Context,
         mut max: i32,
         mut offset: i32,
         mut sort: String,
         order: String,
-    ) -> Vec<FoodgroupView> {
+    ) -> FieldResult<Vec<FoodgroupView>> {
         let conn = context.db.get().unwrap();
-        if max > MAX_RECS {
-            max = MAX_RECS;
+        if max > MAX_RECS || max < 1 {
+            return Err(CustomError::MaxValidationError.into_field_error())
         }
         if offset < 0 {
-            offset = 0;
+            return  Err(CustomError::InvalidOffsetError.into_field_error())
         }
         let fg = Foodgroup::new();
-        let data = fg
-            .browse(max as i64, offset as i64, sort, order, &conn)
-            .expect("error loading nutrients");
+        let data = fg.browse(max as i64, offset as i64, sort, order, &conn)?;
         let mut fgv: Vec<FoodgroupView> = Vec::new();
         for i in &data {
             let fgv1 = &i;
             fgv.push(FoodgroupView::create(fgv1));
         }
-        fgv
+        Ok(fgv)
     }
 }
 pub struct MutationRoot;
