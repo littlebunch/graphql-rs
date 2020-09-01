@@ -7,7 +7,7 @@ use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
 use graphql_rs::Browse;
 use graphql_rs::Get;
-use juniper::{graphql_value, IntoFieldError,FieldError, FieldResult, RootNode};
+use juniper::{graphql_value, FieldError, FieldResult, IntoFieldError, RootNode};
 const MAX_RECS: i32 = 150;
 
 #[derive(Clone)]
@@ -18,24 +18,35 @@ pub struct Context {
 impl juniper::Context for Context {}
 
 pub struct QueryRoot;
+
 enum CustomError {
     MaxValidationError,
-    InvalidOffsetError,
+    OffsetError,
+    FoodSortError,
 }
 
 impl juniper::IntoFieldError for CustomError {
     fn into_field_error(self) -> FieldError {
         match self {
             CustomError::MaxValidationError => FieldError::new(
-                format!("max parameter exceeds allowed amounts.  Enter 1 to {}",MAX_RECS),
+                format!(
+                    "max parameter exceeds allowed amounts.  Enter 1 to {}",
+                    MAX_RECS
+                ),
                 graphql_value!({
                     "type": "MAX_ERROR"
                 }),
             ),
-            CustomError::InvalidOffsetError => FieldError::new(
+            CustomError::OffsetError => FieldError::new(
                 "offset parameter must be greater than 1",
                 graphql_value!({
                     "type": "OFFSET_ERROR"
+                }),
+            ),
+            CustomError::FoodSortError => FieldError::new(
+                "sort parameter not recognized.  try 'description','fdcid', 'upc' or 'id'",
+                graphql_value!({
+                    "type": "SORT_ERROR"
                 }),
             ),
         }
@@ -53,10 +64,25 @@ impl QueryRoot {
     ) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
         if max > MAX_RECS || max < 1 {
-            return Err(CustomError::MaxValidationError.into_field_error())
+            return Err(CustomError::MaxValidationError.into_field_error());
         }
         if offset < 0 {
-            return  Err(CustomError::InvalidOffsetError.into_field_error())
+            return Err(CustomError::OffsetError.into_field_error());
+        }
+
+        if sort.is_empty() {
+            sort = "id".to_string();
+        }
+        sort = sort.to_lowercase();
+        sort = match &*sort {
+            "description" => "description".to_string(),
+            "id" => "id".to_string(),
+            "fdcid" => "fdcId".to_string(),
+            "upc" => "upc".to_string(),
+            _ => "".to_string(),
+        };
+        if sort.is_empty() {
+            return Err(CustomError::FoodSortError.into_field_error());
         }
         let food = Food::new();
         let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
@@ -98,10 +124,10 @@ impl QueryRoot {
         let conn = context.db.get()?;
         let mut b = false;
         if max > MAX_RECS || max < 1 {
-           return Err(CustomError::MaxValidationError.into_field_error())
+            return Err(CustomError::MaxValidationError.into_field_error());
         }
         if offset < 0 {
-            return  Err(CustomError::InvalidOffsetError.into_field_error())
+            return Err(CustomError::OffsetError.into_field_error());
         }
         let n = Nutrient::new();
 
@@ -114,7 +140,28 @@ impl QueryRoot {
 
         Ok(nv)
     }
-
+    fn manufacturers(
+        context: &Context,
+        mut max: i32,
+        mut offset: i32,
+        mut sort: String,
+        order: String,
+    ) -> FieldResult<Vec<ManufacturerView>> {
+        let conn = context.db.get().unwrap();
+        if max > MAX_RECS || max < 1 {
+            return Err(CustomError::MaxValidationError.into_field_error());
+        }
+        if offset < 0 {
+            return Err(CustomError::OffsetError.into_field_error());
+        }
+        let m = Manufacturer::new();
+        let data = m.browse(max as i64, offset as i64, sort, order, &conn)?;
+        let mut mv: Vec<ManufacturerView> = Vec::new();
+        for i in &data {
+            mv.push(ManufacturerView::create(&i));
+        }
+        Ok(mv)
+    }
     fn food_groups(
         context: &Context,
         mut max: i32,
@@ -124,10 +171,10 @@ impl QueryRoot {
     ) -> FieldResult<Vec<FoodgroupView>> {
         let conn = context.db.get().unwrap();
         if max > MAX_RECS || max < 1 {
-            return Err(CustomError::MaxValidationError.into_field_error())
+            return Err(CustomError::MaxValidationError.into_field_error());
         }
         if offset < 0 {
-            return  Err(CustomError::InvalidOffsetError.into_field_error())
+            return Err(CustomError::OffsetError.into_field_error());
         }
         let fg = Foodgroup::new();
         let data = fg.browse(max as i64, offset as i64, sort, order, &conn)?;
@@ -320,7 +367,22 @@ impl FoodgroupView {
         }
     }
 }
-
+#[derive(juniper::GraphQLObject, Debug)]
+#[graphql(description = "The manufacturer (owner) assigned to a food")]
+pub struct ManufacturerView {
+    #[graphql(description = "Unique id identifying a manufacturer")]
+    pub id: i32,
+    #[graphql(description = "Manufacturer name")]
+    pub name: String,
+}
+impl ManufacturerView {
+    fn create(m: &Manufacturer) -> Self {
+        Self {
+            id: m.id,
+            name: m.name.to_string(),
+        }
+    }
+}
 #[derive(juniper::GraphQLObject, Debug)]
 #[graphql(
     description = "The chemical constituent of a food (e.g. calcium, vitamin E) officially recognized as essential to human health"

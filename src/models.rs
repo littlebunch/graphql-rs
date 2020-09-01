@@ -188,6 +188,40 @@ impl Get for Manufacturer {
         Ok(data)
     }
 }
+impl Browse for Manufacturer {
+    type Item = Manufacturer;
+    type Conn = MysqlConnection;
+    fn browse(
+        &self,
+        max: i64,
+        off: i64,
+        sort: String,
+        order: String,
+        conn: &Self::Conn,
+    ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
+        use crate::schema::manufacturers::dsl::*;
+        let mut q = manufacturers.into_boxed();
+        match &*sort {
+            "name" => {
+                q = match &*order {
+                    "name" => q.order(Box::new(name.desc())),
+                    _ => q.order(Box::new(name.asc())),
+                }
+            }
+            _ => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
+            }
+        };
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Manufacturer>(conn)?;
+        Ok(data)
+    }
+}
 
 #[derive(Queryable, Associations, Serialize, Deserialize, Debug)]
 #[table_name = "food_groups"]
