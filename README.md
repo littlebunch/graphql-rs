@@ -59,7 +59,7 @@ mysql -u user -p bfpd < database/bfpd-schema.sql
 ```
 ./target/release/ingest-cvs -p /path/to/csv/
 ```
-The load takes about 8 minutes on my 2015 vintage MBP.  
+The load takes about 8 minutes on my 2015 vintage MBP and about 4 minutes on a newish i3 iMac with 16Gb memory.  
 
 ### Step 2: Start the service
 You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded at start-up:
@@ -152,6 +152,15 @@ The nice thing about graphql is that it's self-documenting as illustrated by the
   foodGroups(max:125,offset:0,sort:"group",order:"asc") {
     id
     group
+  }
+}
+```
+### List food manufacturers (owners) sorted ascending by name:
+```
+{
+  foodGroups(max:150,offset:0,sort:"name",order:"asc") {
+    id
+    name
   }
 }
 ```
