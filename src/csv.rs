@@ -10,6 +10,7 @@ use diesel::mysql::MysqlConnection;
 use std::error::Error;
 use std::fmt;
 use std::process;
+const BATCH_SIZE: usize=2000;
 /// A simple error handler structure
 #[derive(Debug)]
 struct IndexError(String);
@@ -299,12 +300,12 @@ pub fn process_foods(path: String, conn: &MysqlConnection) -> usize {
     let mut fcsv: Foodcsv;
     let mut count: usize = 0;
     // deserialize the foodcsv collection into a Food vec and
-    // insert into the database 2000 records at a time.
+    // insert into the database BATCH_SIZE records at a time.
     for r in &result {
         fcsv = r.deserialize(None).expect("Can't deserialize");
         let f = fcsv.create_food(conn).expect("Can't create food from csv");
         fv.push(f);
-        if fv.len() % 2000 == 0 {
+        if fv.len() % BATCH_SIZE == 0 {
             count += insert_into(foods).values(&fv).execute(conn).unwrap();
             fv.clear();
         }
@@ -373,8 +374,8 @@ pub fn process_nutdata(path: String, conn: &MysqlConnection) -> usize {
         }
         let nd = ndsv.create_nutdata(fid);
         nds.push(nd);
-        // insert the Nutrientdata when vec contains 2000 recs
-        if nds.len() % 2000 == 0 {
+        // insert the Nutrientdata when vec contains BATCH_SIZE recs
+        if nds.len() % BATCH_SIZE == 0 {
             count += insert_into(nutrient_data)
                 .values(&nds)
                 .execute(conn)

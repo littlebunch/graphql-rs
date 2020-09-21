@@ -5,14 +5,34 @@ extern crate clap;
 
 use dotenv::dotenv;
 use std::env;
-
 use crate::diesel::Connection;
 use clap::App;
 use diesel::mysql::MysqlConnection;
 use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
+
+use std::fmt;
 use std::error::Error;
 use std::process;
+#[derive(Debug)]
+struct ArgError {
+    msg: String
+}
 
+impl ArgError {
+    fn new(msg: &str) -> ArgError {
+        ArgError{msg:msg.to_string()}
+    }
+}
+impl fmt::Display for ArgError {
+    fn fmt(&self,f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,"{}",self.msg)
+    }
+}
+impl Error for ArgError {
+    fn description(&self) -> &str {
+        &self.msg
+    }
+}
 fn establish_connection() -> MysqlConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("Bad url");
@@ -61,10 +81,13 @@ fn run() -> Result<usize, Box<dyn Error>> {
             println!("Finished nutrient data.")
         }
         _ => {
-            println!("invalid input type");
+            eprintln!("invalid input type");
+            process::exit(1);
         }
     }
-    Ok(count)
+    
+        Ok(count)
+    
 }
 //#[derive(Debug, Serialize, Deserialize)]
 ///
@@ -74,7 +97,7 @@ fn main() {
             println!("Finished. {} total records loaded", count);
         }
         Err(err) => {
-            println!("{}", err);
+            eprintln!("{}", err);
             process::exit(1);
         }
     }
