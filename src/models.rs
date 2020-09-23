@@ -31,7 +31,7 @@ pub struct Food {
 }
 impl Food {
     pub fn new() -> Self {
-        Self {
+    Self {
             id: 0,
             publication_date: NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),
             modified_date: NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),
@@ -440,5 +440,53 @@ impl NutrientdataForm {
             derivation: (*(d.description)).to_string(),
             derivation_code: (*(d.code)).to_string(),
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn new_nutrientdata_form() {
+        let nf = NutrientdataForm::new();
+        assert_eq!(0.0, nf.value);
+        assert_eq!("unknown", nf.derivation);
+        assert_eq!("unknown", nf.derivation_code);
+        assert_eq!("unknown", nf.nutrient_no);
+        assert_eq!("unknown", nf.nutrient);
+        assert_eq!("unknown", nf.unit);
+    }
+    #[test]
+    fn create_nutrientdata_form() {
+        let n=Nutrient{id:0,description:String::from("A nutrient"),nutrientno:String::from("999"),unit:String::from("g")};
+        let d=Derivation{id:0,description:String::from("Some derivation"),code:String::from("LXXX")};
+        let nd=Nutrientdata::new();
+        let nf=NutrientdataForm::create((&nd,&n,&d));
+        assert_eq!(0.0, nf.value);
+        assert_eq!("Some derivation", nf.derivation);
+        assert_eq!("LXXX", nf.derivation_code);
+        assert_eq!("999", nf.nutrient_no);
+        assert_eq!("A nutrient", nf.nutrient);
+        assert_eq!("g", nf.unit);
+        
+    }
+    #[test]
+    fn new_food() {
+        let f=Food::new();
+        
+       assert_eq!(0,f.id);
+      assert_eq!( NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),   f.publication_date);
+       assert_eq!(NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00),f.modified_date);
+       assert_eq!(NaiveDate::from_ymd(1970, 01, 01).and_hms(00, 00, 00), f.available_date);
+       assert_eq!("unknown",f.upc);
+       assert_eq!("unknown",f.fdc_id);
+       assert_eq!("unknown",f.description);
+       assert_eq!(0,f.food_group_id);
+       assert_eq!(0,f.manufacturer_id);
+       assert_eq!("unknown",f.datasource);
+       assert_eq!(None,f.serving_size);
+       assert_eq!(None,f.serving_unit);
+       assert_eq!(None,f.serving_description);
+       assert_eq!(None,f.country);
+       assert_eq!(None,f.ingredients);
     }
 }

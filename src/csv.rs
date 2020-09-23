@@ -10,7 +10,7 @@ use diesel::mysql::MysqlConnection;
 use std::error::Error;
 use std::fmt;
 use std::process;
-const BATCH_SIZE: usize=2000;
+const BATCH_SIZE: usize = 2000;
 /// A simple error handler structure
 #[derive(Debug)]
 struct IndexError(String);

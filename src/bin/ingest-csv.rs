@@ -3,29 +3,31 @@ extern crate serde;
 #[macro_use]
 extern crate clap;
 
-use dotenv::dotenv;
-use std::env;
 use crate::diesel::Connection;
 use clap::App;
 use diesel::mysql::MysqlConnection;
+use dotenv::dotenv;
 use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
+use std::env;
 
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 use std::process;
 #[derive(Debug)]
 struct ArgError {
-    msg: String
+    msg: String,
 }
 
 impl ArgError {
     fn new(msg: &str) -> ArgError {
-        ArgError{msg:msg.to_string()}
+        ArgError {
+            msg: msg.to_string(),
+        }
     }
 }
 impl fmt::Display for ArgError {
-    fn fmt(&self,f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,"{}",self.msg)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.msg)
     }
 }
 impl Error for ArgError {
@@ -49,6 +51,7 @@ fn run() -> Result<usize, Box<dyn Error>> {
     if csvtype.len() == 0 {
         csvtype = "ALL"
     }
+    let mut err = false;
     let mut count: usize = 0;
     match csvtype {
         "FOOD" => {
@@ -81,13 +84,14 @@ fn run() -> Result<usize, Box<dyn Error>> {
             println!("Finished nutrient data.")
         }
         _ => {
-            eprintln!("invalid input type");
-            process::exit(1);
+            err = true;
         }
     }
-    
+    if err {
+        Err(Box::new(ArgError::new("invalid input type")))
+    } else {
         Ok(count)
-    
+    }
 }
 //#[derive(Debug, Serialize, Deserialize)]
 ///
