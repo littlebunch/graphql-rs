@@ -9,7 +9,6 @@ use diesel::mysql::MysqlConnection;
 /// thanks to @andrewleverette https://github.com/andrewleverette/rust_csv_examples
 use std::error::Error;
 use std::fmt;
-use std::process;
 const BATCH_SIZE: usize = 2000;
 /// A simple error handler structure
 #[derive(Debug)]
@@ -266,42 +265,24 @@ impl Foodcsv {
 /// Using code adapted from https://github.com/andrewleverette/rust_csv_examples, these
 /// two files are sorted and aggregated then deserialized into a data transfer struct and finally
 /// into an insertable Food struct for the database.
-pub fn process_foods(path: String, conn: &MysqlConnection) -> usize {
+pub fn process_foods(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>> {
     use crate::schema::foods::dsl::*;
     // Read food.csv
     let foodfile = format!("{}{}", path, "food.csv");
-    let mut foodcsv = match read_from_file(&foodfile) {
-        Ok(data) => data,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let mut foodcsv = read_from_file(&foodfile)?;
 
     let brandedfile = format!("{}{}", path, "branded_food.csv");
     // Read branded_food.csv
-    let mut branded = match read_from_file(&brandedfile) {
-        Ok(data) => data,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let mut branded = read_from_file(&brandedfile)?;
 
     // Aggregate the 2 files using inner_join
-    let result = match foodcsv.inner_join(&mut branded, "fdc_id") {
-        Ok(data) => data.records,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let result =foodcsv.inner_join(&mut branded, "fdc_id")?;
     let mut fv: Vec<Food> = Vec::new();
     let mut fcsv: Foodcsv;
     let mut count: usize = 0;
     // deserialize the foodcsv collection into a Food vec and
     // insert into the database BATCH_SIZE records at a time.
-    for r in &result {
+    for r in &result.records {
         fcsv = r.deserialize(None).expect("Can't deserialize");
         let f = fcsv.create_food(conn).expect("Can't create food from csv");
         fv.push(f);
@@ -312,7 +293,7 @@ pub fn process_foods(path: String, conn: &MysqlConnection) -> usize {
     }
     // clean out the collection
     count += insert_into(foods).values(&fv).execute(conn).unwrap();
-    count
+    Ok(count)
 }
 /// NutdataCsv for deserializing the csv
 #[derive(Deserialize, Debug)]
@@ -345,19 +326,13 @@ impl NutdataCsv {
         }
     }
 }
-/// Deserializes the food_nutrient.csv into NutdataCsv structs then into Nutrientdata structs
-/// for inserting into the nutrient_data table
-pub fn process_nutdata(path: String, conn: &MysqlConnection) -> usize {
+/// Deserializes the food_nutrient.csv data into NutdataCsv structs then into Nutrientdata structs
+/// which are then inserted into the nutrient_data table
+pub fn process_nutdata(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>>  {
     use crate::schema::nutrient_data::dsl::*;
     let mut count: usize = 0;
     let ndfile = format!("{}{}", path, "food_nutrient.csv");
-    let ndcsv = match read_from_file(&ndfile) {
-        Ok(data) => data,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let ndcsv = read_from_file(&ndfile)?;
     let mut ndsv: NutdataCsv;
     let mut nds: Vec<Nutrientdata> = Vec::new();
     let mut fid: i32 = 0;
@@ -388,7 +363,7 @@ pub fn process_nutdata(path: String, conn: &MysqlConnection) -> usize {
         .values(&nds)
         .execute(conn)
         .unwrap();
-    count
+    Ok(count)
 }
 #[derive(Deserialize, Debug)]
 struct Nutcsv {
@@ -410,26 +385,20 @@ impl Nutcsv {
     }
 }
 /// Inserts nutrients csv into the database
-pub fn process_nutrients(path: String, conn: &MysqlConnection) -> usize {
+pub fn process_nutrients(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>> {
     use crate::schema::nutrients::dsl::*;
     let nutfile = format!("{}{}", path, "nutrient.csv");
-    let recs = match read_from_file(&nutfile) {
-        Ok(data) => data.records,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let recs = read_from_file(&nutfile)?;
     let mut ncsv: Nutcsv;
     let mut nuts: Vec<Nutrient> = Vec::new();
-    for n in recs {
+    for n in recs.records {
         ncsv = n.deserialize(None).expect("Can't deserialize csv");
         let nut = ncsv
             .create_nutrient()
             .expect("Can't create nutrient record");
         nuts.push(nut);
     }
-    insert_into(nutrients).values(&nuts).execute(conn).unwrap()
+    Ok(insert_into(nutrients).values(&nuts).execute(conn).unwrap())
 }
 #[derive(Deserialize, Debug)]
 struct Dervcsv {
@@ -449,27 +418,21 @@ impl Dervcsv {
     }
 }
 /// Inserts derivation csv into the database
-pub fn process_derivations(path: String, conn: &MysqlConnection) -> usize {
+pub fn process_derivations(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>> {
     use crate::schema::derivations::dsl::*;
     let dervfile = format!("{}{}", path, "food_nutrient_derivation.csv");
-    let recs = match read_from_file(&dervfile) {
-        Ok(data) => data.records,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let recs = read_from_file(&dervfile)?;
     let mut dcsv: Dervcsv;
     let mut dervs: Vec<Derivation> = Vec::new();
-    for d in recs {
+    for d in recs.records {
         dcsv = d.deserialize(None).expect("Can't deserialize csv");
         let derv = dcsv
             .create_derivation()
             .expect("Can't create derivation record");
         dervs.push(derv);
     }
-    insert_into(derivations)
+    Ok(insert_into(derivations)
         .values(&dervs)
         .execute(conn)
-        .unwrap()
+        .unwrap())
 }
