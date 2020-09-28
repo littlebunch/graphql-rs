@@ -81,7 +81,8 @@ docker run --rm -it -p 8080:8080 --env-file=/full/path/to/.env littlebunch/graph
 ```
 The client will be available at  http://localhost:8080/graphiql.
 ## Sample Queries
-The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries you can paste into the client of your choice, e.g. Insomnia, Postman or the local graphiql playground: 
+To get you started, here are some sample queries you can paste into the client of your choice, e.g. Insomnia, Postman or the local graphiql playground.  Use either http://localhost:8080/graphql or https://rs.littlebunch.com/graphql.
+
 #### Food UPC 000000018753 with all nutrient data:
 ```
 {
