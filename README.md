@@ -13,7 +13,7 @@ Feel free to take this project as a starting point for writing your own graphql 
 [./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
 [./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls     
 [./src/bin/ingest-csv.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/bin/ingest-csv.rs) -- cli utility for importing the USDA csv files into the database    
-[./database/bfpd-schema.sql](https://github.com/littlebunch/graphql-rs/tree/master/database) -- the mysql schema for the database
+[./database/](https://github.com/littlebunch/graphql-rs/tree/master/database) -- Diesel migration scripts to create the database and schema.rs
 
 ## How to Build
 ### Step 1: Set-up your environment: 
@@ -51,15 +51,18 @@ wget https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_Supporting_Data_csv_
 ```
 mysql -u user -p -e"create schema bfpd;"
 ```
-```
-mysql -u user -p bfpd < database/bfpd-schema.sql
-````
 
-3. Load the data by pointing the program to the full path containing the csv:
+3. Use the Diesel migration script to create an empty database.
+```
+mysql -u user -p bfpd < database/up.sql
+```
+Note: You can use the up.sql and down.sql scripts to create a [diesel migration](https://diesel.rs/guides/getting-started/).  This is probably more trouble than it's worth unless you need to change the schema or just want to learn a bit more about diesel migrations.
+
+4. Load the data by pointing the program to the full path containing the csv:
 ```
 ./target/release/ingest-cvs -p /path/to/csv/
 ```
-The load takes about 8 minutes on my 2015 vintage MBP and about 4 minutes on a newish i3 iMac with 16Gb memory.  
+The load takes about 3-10 minutes depending on your hardware.  Note:  you need to set a DATABASE_URL variable as described in Step 2 below before running the ingest-csv program.
 
 ### Step 2: Start the service
 You need to set a couple of environment variables.  It generally makes sense to put them in an .env file in the root path of your project which gets loaded at start-up:
@@ -78,7 +81,7 @@ docker run --rm -it -p 8080:8080 --env-file=/full/path/to/.env littlebunch/graph
 ```
 The client will be available at  http://localhost:8080/graphiql.
 ## Sample Queries
-The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries you can paste into the client: 
+The nice thing about graphql is that it's self-documenting as illustrated by the client's "Documentation Explorer".  To get you started, here are some sample queries you can paste into the client of your choice, e.g. Insomnia, Postman or the local graphiql playground: 
 #### Food UPC 000000018753 with all nutrient data:
 ```
 {
