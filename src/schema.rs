@@ -59,12 +59,12 @@ table! {
         median -> Nullable<Double>,
         derivation_id -> Integer,
         nutrient_id -> Integer,
-        food_id -> Integer,
+        food_id -> Nullable<Integer>,
     }
 }
 
-joinable!(foods -> manufacturers (manufacturer_id));
 joinable!(foods -> food_groups (food_group_id));
+joinable!(foods -> manufacturers (manufacturer_id));
 joinable!(nutrient_data -> derivations (derivation_id));
 joinable!(nutrient_data -> foods (food_id));
 joinable!(nutrient_data -> nutrients (nutrient_id));
