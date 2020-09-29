@@ -59,7 +59,7 @@ table! {
         median -> Nullable<Double>,
         derivation_id -> Integer,
         nutrient_id -> Integer,
-        food_id -> Nullable<Integer>,
+        food_id -> Integer,
     }
 }
 
