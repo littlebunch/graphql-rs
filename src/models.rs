@@ -1,12 +1,24 @@
 extern crate diesel;
-
 use self::diesel::prelude::*;
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
 use crate::Browse;
 use crate::Get;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::mysql::MysqlConnection;
+use regex::Regex;
 use std::error::Error;
+pub struct BrowseFoodsQuery {
+    pub max: i32,
+    pub offset: i32,
+    pub sort: String,
+    pub order: String,
+    pub filters: BrowseFoodsFilters,
+}
+pub struct BrowseFoodsFilters {
+    pub publication_date: String,
+    pub food_group: String,
+    pub manufacturers: String,
+}
 #[derive(
     Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
 )]
@@ -29,6 +41,7 @@ pub struct Food {
     pub country: Option<String>,
     pub ingredients: Option<String>,
 }
+
 impl Food {
     pub fn new() -> Self {
         Self {
@@ -49,7 +62,90 @@ impl Food {
             ingredients: None,
         }
     }
-
+    pub fn browse_foods(
+        &self,
+        bq: BrowseFoodsQuery,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<Food>, Box<dyn Error>> {
+        use crate::schema::foods::dsl::*;
+        let mut q = foods.into_boxed();
+        let filters = bq.filters;
+        let sort = bq.sort;
+        let max = bq.max;
+        let order = bq.order;
+        let off = bq.offset;
+        match &*sort {
+            "description" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(description.desc())),
+                    _ => q.order(Box::new(description.asc())),
+                }
+            }
+            "upc" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(upc.desc())),
+                    _ => q.order(Box::new(upc.asc())),
+                }
+            }
+            "fdcId" => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(fdc_id.desc())),
+                    _ => q.order(Box::new(fdc_id.asc())),
+                }
+            }
+            _ => {
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
+            }
+        };
+        // build publication date range if we have at least one date
+        if filters.publication_date != "" {
+            let dv = filters.publication_date.split(":").collect::<Vec<&str>>();
+            //let dv=ds.collect::<Vec<&str>>();
+            let mut fdate = dv[0].to_string();
+            let mut tdate = dv[0].to_string();
+            // set through date if provided in request
+            if dv.len() > 1 {
+                tdate = dv[1].to_string();
+            }
+            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
+            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
+            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
+            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
+            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
+            q = q.filter(publication_date.between(lhs, uhs));
+        }
+        // add manufacturer if we have one
+        if filters.manufacturers != "" {
+            let mut fm=Manufacturer::new();
+            fm.name=filters.manufacturers;
+            let i = match fm.find_by_name(conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            q= q.filter(manufacturer_id.eq(i));
+        }
+        // add food group filter if we have one
+        if filters.food_group != "" {
+            let mut fgg = Foodgroup::new();
+            fgg.description = filters.food_group;
+            if fgg.description.len() == 0 {
+                fgg.description = String::from("Unknown");
+            }
+            let i = match fgg.find_by_description(conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            q = q.filter(food_group_id.eq(i));
+        }
+        q = q.limit(max as i64).offset(off as i64);
+        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Food>(conn)?;
+        Ok(data)
+    }
     pub fn get_food_group_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
         use crate::schema::food_groups::dsl::*;
         let fg = food_groups
@@ -151,8 +247,8 @@ impl Browse for Food {
             }
         };
         q = q.limit(max).offset(off);
-        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
-        // println!("The query: {:?}", debug);
+        let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        println!("The query: {:?}", debug);
         let data = q.load::<Food>(conn)?;
         Ok(data)
     }

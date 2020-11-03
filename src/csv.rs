@@ -276,7 +276,7 @@ pub fn process_foods(path: String, conn: &MysqlConnection) -> Result<usize, Box<
     let mut branded = read_from_file(&brandedfile)?;
 
     // Aggregate the 2 files using inner_join
-    let result =foodcsv.inner_join(&mut branded, "fdc_id")?;
+    let result = foodcsv.inner_join(&mut branded, "fdc_id")?;
     let mut fv: Vec<Food> = Vec::new();
     let mut fcsv: Foodcsv;
     let mut count: usize = 0;
@@ -328,7 +328,7 @@ impl NutdataCsv {
 }
 /// Deserializes the food_nutrient.csv data into NutdataCsv structs then into Nutrientdata structs
 /// which are then inserted into the nutrient_data table
-pub fn process_nutdata(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>>  {
+pub fn process_nutdata(path: String, conn: &MysqlConnection) -> Result<usize, Box<dyn Error>> {
     use crate::schema::nutrient_data::dsl::*;
     let mut count: usize = 0;
     let ndfile = format!("{}{}", path, "food_nutrient.csv");

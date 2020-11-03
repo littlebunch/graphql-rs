@@ -56,36 +56,53 @@ impl juniper::IntoFieldError for CustomError {
 impl QueryRoot {
     fn foods(
         context: &Context,
-        mut max: i32,
-        mut offset: i32,
-        mut sort: String,
-        mut order: String,
+        mut browse: Browsequery,
+        //mut max: i32,
+        //mut offset: i32,
+        //mut sort: String,
+        //mut order: String,
         nids: Vec<String>,
     ) -> FieldResult<Vec<Foodview>> {
+        let fq = BrowseFoodsFilters {
+            publication_date: browse.filters.publication_date,
+            food_group: browse.filters.food_group,
+            manufacturers: browse.filters.manufacturers,
+        };
+        let mut bq = BrowseFoodsQuery {
+            max: browse.max,
+            offset: browse.offset,
+            sort: browse.sort,
+            order: browse.order,
+            filters: fq,
+        };
         let conn = context.db.get().unwrap();
-        if max > MAX_RECS || max < 1 {
+        //let mut max = bq.max;
+        //let mut offset = bq.offset;
+        //let mut sort = bq.sort;
+        // let mut order = bq.order;
+        if bq.max > MAX_RECS || bq.max < 1 {
             return Err(CustomError::MaxValidationError.into_field_error());
         }
-        if offset < 0 {
+        if bq.offset < 0 {
             return Err(CustomError::OffsetError.into_field_error());
         }
 
-        if sort.is_empty() {
-            sort = "id".to_string();
+        if bq.sort.is_empty() {
+            bq.sort = "id".to_string();
         }
-        sort = sort.to_lowercase();
-        sort = match &*sort {
+        bq.sort = bq.sort.to_lowercase();
+        bq.sort = match &*bq.sort {
             "description" => "description".to_string(),
             "id" => "id".to_string(),
             "fdcid" => "fdcId".to_string(),
             "upc" => "upc".to_string(),
             _ => "".to_string(),
         };
-        if sort.is_empty() {
+        if bq.sort.is_empty() {
             return Err(CustomError::FoodSortError.into_field_error());
         }
         let food = Food::new();
-        let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
+        let data = food.browse_foods(bq, &conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
     fn food(context: &Context, fid: String, nids: Vec<String>) -> FieldResult<Vec<Foodview>> {
@@ -411,9 +428,28 @@ impl Nutrientview {
     description = "Input object for defining a foods browse query"
 )]
 pub struct Browsequery {
+    #[graphql(description=format!("Maximum records to return up to {}", MAX_RECS))]
     pub max: i32,
+    #[graphql(description = "Return records starting at an offset into the result set")]
     pub offset: i32,
-    #[graphql(description = "Sort order, one of: database id (default),description, upc or fdcId")]
+    #[graphql(description = "Sort by, one of: database id (default),description, upc or fdcId")]
     pub sort: String,
+    #[graphql(description = "Sort order, one of: asc (default) or desc")]
     pub order: String,
+    pub filters: Browsefilters,
+}
+#[derive(juniper::GraphQLInputObject, Debug)]
+pub struct Browsefilters {
+    #[graphql(
+        name = "pubdate",
+        description = "Return records between two publication dates"
+    )]
+    pub publication_date: String,
+    #[graphql(name = "fg", description = "Return records from specified food group")]
+    pub food_group: String,
+    #[graphql(
+        name = "manu",
+        description = "Return records from specified manufacturer"
+    )]
+    pub manufacturers: String,
 }

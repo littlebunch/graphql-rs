@@ -57,17 +57,18 @@ fn run() -> Result<usize, Box<dyn Error>> {
         "FOOD" => {
             println!("Loading foods");
             count = match process_foods(path.to_string(), &conn) {
-                Ok(c)=>c,
+                Ok(c) => c,
                 Err(e) => {
-                    eprintln!("{}",e);
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
             println!("Finished foods.");
             println!("Now loading nutrient data.");
-            count += match process_nutdata(path.to_string(), &conn) {Ok(c)=>c,
+            count += match process_nutdata(path.to_string(), &conn) {
+                Ok(c) => c,
                 Err(e) => {
-                    eprintln!("{}",e);
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
@@ -75,9 +76,9 @@ fn run() -> Result<usize, Box<dyn Error>> {
         }
         "NUT" => {
             count = match process_nutrients(path.to_string(), &conn) {
-                Ok(c)=>c,
-                Err(e)=> {
-                    eprintln!("{}",e);
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
@@ -85,9 +86,9 @@ fn run() -> Result<usize, Box<dyn Error>> {
         }
         "DERV" => {
             count = match process_derivations(path.to_string(), &conn) {
-                Ok(c)=> c,
-                Err(e)=> {
-                    eprintln!("{}",e);
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
@@ -96,36 +97,35 @@ fn run() -> Result<usize, Box<dyn Error>> {
         "ALL" => {
             println!("Starting csv load");
             count = match process_nutrients(path.to_string(), &conn) {
-                Ok(c)=>c,
-                Err(e)=> {
-                    eprintln!("{}",e);
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
             println!("Finished.  {} nutrients loaded", count);
             count += match process_derivations(path.to_string(), &conn) {
-                Ok(c)=> c,
-                Err(e)=> {
-                    eprintln!("{}",e);
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
             println!("Finished derivations");
             println!("Loading foods");
             count += match process_foods(path.to_string(), &conn) {
-                Ok(c)=>c,
+                Ok(c) => c,
                 Err(e) => {
-                    eprintln!("{}",e);
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
-
             };
             println!("Finished foods.");
             println!("Now loading nutrient data.");
             count += match process_nutdata(path.to_string(), &conn) {
-                Ok(c)=>c,
+                Ok(c) => c,
                 Err(e) => {
-                    eprintln!("{}",e);
+                    eprintln!("{}", e);
                     process::exit(1);
                 }
             };
