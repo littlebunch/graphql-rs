@@ -121,10 +121,29 @@ To get you started, here are some sample queries you can paste into the client o
   }
 }
 ```
-#### Browse foods, sorted descending by food name:
+#### Browse foods, sorted ascending by upc filtered on publication date of 2020-02-01 and food group "Biscuits/Cookies":
 ```
 {
-  foods(max: 150, offset: 0, sort: "description", order:"desc", nids: []) {
+  foods(browse: {max: 150, offset: 0, sort: "upc", order: "asc", filters: {pubdate: "20200201", fg: "Biscuits/Cookies", manu: ""}}, nids: []) {
+    upc
+    description
+    manufacturer
+    food
+    ingredients
+    foodGroup
+    nutrientData {
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
+  }
+}
+```
+#### Browse foods, sorted ascending by upc filtered on publication date range from 2020-02-01 through 2020-05-31 and manufacturer "GENERAL MILLS SALES INC.":
+```
+{
+  foods(browse: {max: 150, offset: 0, sort: "description", order: "asc", filters: {pubdate: "20200201:20200531", fg: "", manu: "GENERAL MILLS SALES INC."}}, nids: []) {
     upc
     description
     manufacturer
