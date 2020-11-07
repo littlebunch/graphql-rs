@@ -54,7 +54,7 @@ mysql -u user -p -e"create schema bfpd;"
 
 3. Use the Diesel migration script to create an empty database.
 ```
-mysql -u user -p bfpd < database/up.sql
+mysql -u user -p bfpd < database/mariadb/up.sql
 ```
 Note: You can use the up.sql and down.sql scripts to create a [diesel migration](https://diesel.rs/guides/getting-started/).  This is probably more trouble than it's worth unless you need to change the schema or just want to learn a bit more about diesel migrations.
 
