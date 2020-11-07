@@ -1,5 +1,5 @@
 # graphql-rs
-A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an exercise in learning Rust. I used https://github.com/iwilsonq/rust-graphql-example and https://github.com/andrewleverette/rust_csv_examples as starting points for the server and csv processing respectively.  The Rust learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
+A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com). (A preliminary [postgresql](https://www.postgresql.org) version is also available on the pg branch.)  This project is an exercise in learning Rust. I used https://github.com/iwilsonq/rust-graphql-example and https://github.com/andrewleverette/rust_csv_examples as starting points for the server and csv processing respectively.  The Rust learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
 A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker image is available on [docker hub](https://hub.docker.com/repository/docker/littlebunch/graphql-rs).  A recent dump of the database is available at [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-07-27.sql.gz).
 
@@ -13,7 +13,7 @@ Feel free to take this project as a starting point for writing your own graphql 
 [./src/models.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/models.rs) -- all the stuff for accessing the database using Diesel ORM     
 [./src/schema.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/schema.rs) -- database schema derived from Diesel CLI and used by Diesel calls     
 [./src/bin/ingest-csv.rs](https://github.com/littlebunch/graphql-rs/blob/master/src/bin/ingest-csv.rs) -- cli utility for importing the USDA csv files into the database    
-[./database/](https://github.com/littlebunch/graphql-rs/tree/master/database) -- Diesel migration scripts to create the database and schema.rs
+[./database/](https://github.com/littlebunch/graphql-rs/tree/master/database) -- Diesel migration scripts for mariadb and postgres to create the database and schema.rs
 
 ## How to Build
 ### Step 1: Set-up your environment: 
