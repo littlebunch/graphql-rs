@@ -202,8 +202,14 @@ impl Foodcsv {
             true => String::from("1970-01-01 19:00:00"),
             false => self.date_available.to_string() + " 19:00:00",
         };
-        let pdate = self.date_published.to_string() + " 19:00:00";
-        let mdate = self.date_modified.to_string() + " 19:00:00";
+        let pdate = match self.date_published.is_empty() {
+            true => String::from("1970-01-01 19:00:00"),
+            false => self.date_published.to_string() + " 19:00:00",
+        };
+        let mdate = match self.date_modified.is_empty() {
+            true => String::from("1970-01-01 19:00:00"),
+            false => self.date_modified.to_string() + " 19:00:00",
+        };
         f.upc = self.upc.to_string();
         f.fdc_id = self.fdc_id.to_string();
         f.description = self.description.to_string();
@@ -227,13 +233,16 @@ impl Foodcsv {
         use crate::schema::manufacturers::dsl::*;
         let mut manu = Manufacturer::new();
         manu.name = self.manufacturer.to_string();
+        if manu.name == "" {
+            manu.name=String::from("Unknown");
+        }
         let mut i = match manu.find_by_name(conn) {
             Ok(data) => data.id,
-            Err(_tttttttte) => -1,
+            Err(_e) => -1,
         };
         if i == -1 {
             insert_into(manufacturers)
-                .values(name.eq(self.manufacturer.to_string()))
+                .values(name.eq(manu.name))
                 .execute(conn)?;
             i = self.create_manufacturer_id(conn)?;
         }
@@ -283,6 +292,7 @@ pub fn process_foods(path: String, conn: &MysqlConnection) -> Result<usize, Box<
     // deserialize the foodcsv collection into a Food vec and
     // insert into the database BATCH_SIZE records at a time.
     for r in &result.records {
+        
         fcsv = r.deserialize(None).expect("Can't deserialize");
         let f = fcsv.create_food(conn).expect("Can't create food from csv");
         fv.push(f);
