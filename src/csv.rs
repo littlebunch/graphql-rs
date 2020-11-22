@@ -210,13 +210,17 @@ impl Foodcsv {
             true => String::from("1970-01-01 19:00:00"),
             false => self.date_modified.to_string() + " 19:00:00",
         };
+        let s:f64 = match self.serving_size.parse() {
+            Ok(data) => data,
+            Err(_e) => 0.0
+        };
         f.upc = self.upc.to_string();
         f.fdc_id = self.fdc_id.to_string();
         f.description = self.description.to_string();
         f.datasource = self.datasource.to_string();
         f.serving_unit = Some(self.serving_unit.to_string());
         f.serving_description = Some(self.serving_description.to_string());
-        f.serving_size = Some(12.0); //convert
+        f.serving_size = Some(s); //convert
         f.country = Some(self.country.to_string());
         f.ingredients = Some(self.ingredients.to_string());
         f.publication_date = NaiveDateTime::parse_from_str(&pdate, "%Y-%m-%d %H:%M:%S")?;

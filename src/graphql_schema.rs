@@ -273,7 +273,7 @@ impl Foodview {
                 let nf = &j;
                 let mut nv = Nutrientdataview::create(&nf);
                 nv.portion_value = match fdv.serving_size {
-                    Some(x) => (x as f64 / 100.0) * nv.value,
+                    Some(x) => ((x as f64 / 100.0) * nv.value).round(),
                     None => 0.0,
                 };
                 ndv.push(nv);
