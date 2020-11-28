@@ -210,9 +210,9 @@ impl Foodcsv {
             true => String::from("1970-01-01 19:00:00"),
             false => self.date_modified.to_string() + " 19:00:00",
         };
-        let s:f64 = match self.serving_size.parse() {
+        let s: f64 = match self.serving_size.parse() {
             Ok(data) => data,
-            Err(_e) => 0.0
+            Err(_e) => 0.0,
         };
         f.upc = self.upc.to_string();
         f.fdc_id = self.fdc_id.to_string();
@@ -238,7 +238,7 @@ impl Foodcsv {
         let mut manu = Manufacturer::new();
         manu.name = self.manufacturer.to_string();
         if manu.name == "" {
-            manu.name=String::from("Unknown");
+            manu.name = String::from("Unknown");
         }
         let mut i = match manu.find_by_name(conn) {
             Ok(data) => data.id,
@@ -296,7 +296,6 @@ pub fn process_foods(path: String, conn: &MysqlConnection) -> Result<usize, Box<
     // deserialize the foodcsv collection into a Food vec and
     // insert into the database BATCH_SIZE records at a time.
     for r in &result.records {
-        
         fcsv = r.deserialize(None).expect("Can't deserialize");
         let f = fcsv.create_food(conn).expect("Can't create food from csv");
         fv.push(f);

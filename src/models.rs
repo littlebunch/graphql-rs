@@ -1,5 +1,5 @@
 extern crate diesel;
-use self::diesel::prelude::*;
+use self::diesel::{prelude::*, sql_query, sql_types::*};
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
 use crate::Browse;
 use crate::Get;
@@ -19,8 +19,22 @@ pub struct BrowseFoodsFilters {
     pub food_group: String,
     pub manufacturers: String,
 }
+pub struct SearchFoodsQuery {
+    pub max: i32,
+    pub offset: i32,
+    pub query: String,
+    pub filters: BrowseFoodsFilters,
+}
 #[derive(
-    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
+    Identifiable,
+    Queryable,
+    QueryableByName,
+    Associations,
+    PartialEq,
+    Insertable,
+    Serialize,
+    Deserialize,
+    Debug,
 )]
 #[belongs_to(Manufacturer)]
 #[table_name = "foods"]
@@ -61,6 +75,23 @@ impl Food {
             country: None,
             ingredients: None,
         }
+    }
+
+    pub fn search_foods(
+        &self,
+        sq: SearchFoodsQuery,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<Food>, Box<dyn Error>> {
+        let filters=sq.filters
+        let rows = sql_query(
+            "SELECT f.* FROM foods f WHERE MATCH(f.description,f.ingredients) AGAINST(?) ORDER BY f.description LIMIT ? OFFSET ?",
+        )
+        .bind::<Text, _>(sq.query)
+        .bind::<Integer, _>(sq.max)
+        .bind::<Integer, _>(sq.offset)
+        .load::<Food>(conn)?;
+        println!("{:?}", rows);
+        Ok(rows)
     }
     pub fn browse_foods(
         &self,
@@ -119,13 +150,13 @@ impl Food {
         }
         // add manufacturer if we have one
         if filters.manufacturers != "" {
-            let mut fm=Manufacturer::new();
-            fm.name=filters.manufacturers;
+            let mut fm = Manufacturer::new();
+            fm.name = filters.manufacturers;
             let i = match fm.find_by_name(conn) {
                 Ok(data) => data.id,
                 Err(_e) => -1,
             };
-            q= q.filter(manufacturer_id.eq(i));
+            q = q.filter(manufacturer_id.eq(i));
         }
         // add food group filter if we have one
         if filters.food_group != "" {

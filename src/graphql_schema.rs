@@ -54,13 +54,24 @@ impl juniper::IntoFieldError for CustomError {
 }
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    fn foods(
+    fn search_foods(
+        context: &Context,
+        mut search: Searchquery,
+        nids: Vec<String>,
+    ) -> FieldResult<Vec<Foodview>> {
+        let mut sq = SearchFoodsQuery {
+            max: search.max,
+            offset: search.offset,
+            query: search.query,
+        };
+        let food = Food::new();
+        let conn = context.db.get().unwrap();
+        let data = food.search_foods(sq, &conn)?;
+        Ok(Foodview::build_view(data, &nids, &conn))
+    }
+    fn browse_foods(
         context: &Context,
         mut browse: Browsequery,
-        //mut max: i32,
-        //mut offset: i32,
-        //mut sort: String,
-        //mut order: String,
         nids: Vec<String>,
     ) -> FieldResult<Vec<Foodview>> {
         let fq = BrowseFoodsFilters {
@@ -76,10 +87,6 @@ impl QueryRoot {
             filters: fq,
         };
         let conn = context.db.get().unwrap();
-        //let mut max = bq.max;
-        //let mut offset = bq.offset;
-        //let mut sort = bq.sort;
-        // let mut order = bq.order;
         if bq.max > MAX_RECS || bq.max < 1 {
             return Err(CustomError::MaxValidationError.into_field_error());
         }
@@ -452,4 +459,17 @@ pub struct Browsefilters {
         description = "Return records from specified manufacturer"
     )]
     pub manufacturers: String,
+}
+#[derive(juniper::GraphQLInputObject, Debug)]
+#[graphql(
+    name = "SearchRequest",
+    description = "Input object for defining a foods search query"
+)]
+pub struct Searchquery {
+    #[graphql(description=format!("Maximum records to return up to {}", MAX_RECS))]
+    pub max: i32,
+    #[graphql(description = "Return records starting at an offset into the result set")]
+    pub offset: i32,
+    #[graphql(description = "Sort order, one of: asc (default) or desc")]
+    pub query: String,
 }
