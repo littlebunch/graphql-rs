@@ -54,62 +54,69 @@ impl juniper::IntoFieldError for CustomError {
 }
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    fn search_foods(
-        context: &Context,
-        mut search: Searchquery,
-        nids: Vec<String>,
-    ) -> FieldResult<Vec<Foodview>> {
-        let mut sq = SearchFoodsQuery {
-            max: search.max,
-            offset: search.offset,
-            query: search.query,
-        };
-        let food = Food::new();
-        let conn = context.db.get().unwrap();
-        let data = food.search_foods(sq, &conn)?;
-        Ok(Foodview::build_view(data, &nids, &conn))
-    }
-    fn browse_foods(
+    fn foods(
         context: &Context,
         mut browse: Browsequery,
         nids: Vec<String>,
     ) -> FieldResult<Vec<Foodview>> {
-        let fq = BrowseFoodsFilters {
-            publication_date: browse.filters.publication_date,
-            food_group: browse.filters.food_group,
-            manufacturers: browse.filters.manufacturers,
-        };
-        let mut bq = BrowseFoodsQuery {
-            max: browse.max,
-            offset: browse.offset,
-            sort: browse.sort,
-            order: browse.order,
-            filters: fq,
-        };
         let conn = context.db.get().unwrap();
-        if bq.max > MAX_RECS || bq.max < 1 {
+        let mut max = browse.max;
+        if max > MAX_RECS || max < 1 {
             return Err(CustomError::MaxValidationError.into_field_error());
         }
-        if bq.offset < 0 {
+        if max < 0 {
             return Err(CustomError::OffsetError.into_field_error());
         }
-
-        if bq.sort.is_empty() {
-            bq.sort = "id".to_string();
+        let mut sort = browse.sort;
+        if sort.is_empty() {
+            sort = "id".to_string();
         }
-        bq.sort = bq.sort.to_lowercase();
-        bq.sort = match &*bq.sort {
+        sort = sort.to_lowercase();
+        sort = match &*sort {
             "description" => "description".to_string(),
             "id" => "id".to_string(),
             "fdcid" => "fdcId".to_string(),
             "upc" => "upc".to_string(),
             _ => "".to_string(),
         };
-        if bq.sort.is_empty() {
+        if sort.is_empty() {
             return Err(CustomError::FoodSortError.into_field_error());
         }
-        let food = Food::new();
-        let data = food.browse_foods(bq, &conn)?;
+        let order = browse.order;
+        let offset = browse.offset;
+        let mut food = Food::new();
+        // stash filters into the Food struct, this is ugly but helps keep things simple
+        // for users and the model
+        if !browse.filters.manufacturers.is_empty() {
+            let mut fm = Manufacturer::new();
+            fm.name = browse.filters.manufacturers;
+            let i = match fm.find_by_name(&conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            food.manufacturer_id = i;
+        }
+        // add food group filter if we have one
+        if !browse.filters.food_group.is_empty() {
+            let mut fgg = Foodgroup::new();
+            fgg.description = browse.filters.food_group;
+            if fgg.description.len() == 0 {
+                fgg.description = String::from("Unknown");
+            }
+            let i = match fgg.find_by_description(&conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            food.food_group_id = i;
+        }
+        // stash publication date filter into food ingredients
+        // ugly but expedient
+        if !browse.filters.publication_date.is_empty() {
+            food.ingredients = Some(browse.filters.publication_date)
+        }
+        // put any search terms into the food description field
+        food.description = browse.filters.query;
+        let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
     fn food(context: &Context, fid: String, nids: Vec<String>) -> FieldResult<Vec<Foodview>> {
@@ -459,17 +466,9 @@ pub struct Browsefilters {
         description = "Return records from specified manufacturer"
     )]
     pub manufacturers: String,
-}
-#[derive(juniper::GraphQLInputObject, Debug)]
-#[graphql(
-    name = "SearchRequest",
-    description = "Input object for defining a foods search query"
-)]
-pub struct Searchquery {
-    #[graphql(description=format!("Maximum records to return up to {}", MAX_RECS))]
-    pub max: i32,
-    #[graphql(description = "Return records starting at an offset into the result set")]
-    pub offset: i32,
-    #[graphql(description = "Sort order, one of: asc (default) or desc")]
+    #[graphql(
+        name = "query",
+        description = "Return records from specified manufacturer"
+    )]
     pub query: String,
 }

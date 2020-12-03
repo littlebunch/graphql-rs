@@ -1,5 +1,6 @@
 extern crate diesel;
 use self::diesel::{prelude::*, sql_query, sql_types::*};
+use diesel::expression::sql_literal::sql;
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
 use crate::Browse;
 use crate::Get;
@@ -82,7 +83,7 @@ impl Food {
         sq: SearchFoodsQuery,
         conn: &MysqlConnection,
     ) -> Result<Vec<Food>, Box<dyn Error>> {
-        let filters=sq.filters
+        let filters = sq.filters;
         let rows = sql_query(
             "SELECT f.* FROM foods f WHERE MATCH(f.description,f.ingredients) AGAINST(?) ORDER BY f.description LIMIT ? OFFSET ?",
         )
@@ -250,7 +251,16 @@ impl Browse for Food {
         conn: &Self::Conn,
     ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::foods::dsl::*;
+        
         let mut q = foods.into_boxed();
+        if !self.description.is_empty() {
+            let query = &self.description;
+            q = q.filter(
+                sql("MATCH(foods.description,foods.ingredients) AGAINST(")
+                    .bind::<Text, _>(query)
+                    .sql(")")
+            );
+        }
         match &*sort {
             "description" => {
                 q = match &*order {
@@ -277,6 +287,33 @@ impl Browse for Food {
                 }
             }
         };
+        if self.manufacturer_id > 0 {
+            q= q.filter(manufacturer_id.eq(self.manufacturer_id ));
+        }
+        if self.food_group_id > 0 {
+            q= q.filter(food_group_id.eq(self.food_group_id ));
+        }
+        // build publication date range if we have at least one date
+        let pubrange:String = match &self.ingredients {
+            None => "".to_string(),
+            Some(inner)=> inner.to_string(),
+        };
+        if pubrange != "" {
+            let dv = pubrange.split(":").collect::<Vec<&str>>();
+            //let dv=ds.collect::<Vec<&str>>();
+            let mut fdate = dv[0].to_string();
+            let mut tdate = dv[0].to_string();
+            // set through date if provided in request
+            if dv.len() > 1 {
+                tdate = dv[1].to_string();
+            }
+            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
+            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
+            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
+            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
+            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
+            q = q.filter(publication_date.between(lhs, uhs));
+        }
         q = q.limit(max).offset(off);
         let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
         println!("The query: {:?}", debug);
