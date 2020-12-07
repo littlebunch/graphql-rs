@@ -5,8 +5,7 @@ extern crate serde_json;
 use crate::db::MysqlPool;
 use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
-use graphql_rs::Browse;
-use graphql_rs::Get;
+use graphql_rs::{Browse,Count,Get};
 use juniper::{graphql_value, FieldError, FieldResult, IntoFieldError, RootNode};
 const MAX_RECS: i32 = 150;
 
@@ -23,6 +22,8 @@ enum CustomError {
     MaxValidationError,
     OffsetError,
     FoodSortError,
+    FoodGroupNotFoundError,
+    ManuNotFoundError,
 }
 
 impl juniper::IntoFieldError for CustomError {
@@ -49,11 +50,62 @@ impl juniper::IntoFieldError for CustomError {
                     "type": "SORT_ERROR"
                 }),
             ),
+            CustomError::FoodGroupNotFoundError => FieldError::new(
+                "Food group not found.",
+                graphql_value!({
+                    "type": "NOT_FOUND_ERROR"
+                }),
+            ),
+            CustomError::ManuNotFoundError => FieldError::new(
+                "Manufacturer not found.",
+                graphql_value!({
+                    "type": "NOT_FOUND_ERROR"
+                }),
+            ),
         }
     }
 }
 #[juniper::object(Context = Context)]
 impl QueryRoot {
+    // count foods in a query
+    fn foods_count(context: &Context, mut filters: Browsefilters) -> FieldResult<Querycount> {
+        let mut food = Food::new();
+        let conn = context.db.get().unwrap();
+        if !filters.manufacturers.is_empty() {
+            let mut fm = Manufacturer::new();
+            fm.name = filters.manufacturers;
+            let i = match fm.find_by_name(&conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            if i == -1 {
+                return Err(CustomError::ManuNotFoundError.into_field_error());
+            }
+            food.manufacturer_id = i;
+        }
+        if !filters.food_group.is_empty() {
+            let mut fgg = Foodgroup::new();
+            fgg.description = filters.food_group;
+            if fgg.description.len() == 0 {
+                fgg.description = String::from("Unknown");
+            }
+            let i = match fgg.find_by_description(&conn) {
+                Ok(data) => data.id,
+                Err(_e) => -1,
+            };
+            if i == -1 {
+                return Err(CustomError::FoodGroupNotFoundError.into_field_error());
+            }
+            food.food_group_id = i;
+        }
+        if !filters.publication_date.is_empty() {
+            food.ingredients = Some(filters.publication_date)
+        }
+        food.description = filters.query;
+       let c=food.query_count(&conn)?;
+        Ok(Querycount{count:c.to_string()})
+    }
+    // list foods
     fn foods(
         context: &Context,
         mut browse: Browsequery,
@@ -94,6 +146,9 @@ impl QueryRoot {
                 Ok(data) => data.id,
                 Err(_e) => -1,
             };
+            if i == -1 {
+                return Err(CustomError::ManuNotFoundError.into_field_error());
+            }
             food.manufacturer_id = i;
         }
         // add food group filter if we have one
@@ -107,10 +162,13 @@ impl QueryRoot {
                 Ok(data) => data.id,
                 Err(_e) => -1,
             };
-            food.food_group_id = i;
+            if food.food_group_id == -1 {
+                return Err(CustomError::FoodGroupNotFoundError.into_field_error());
+            }
         }
         // stash publication date filter into food ingredients
         // ugly but expedient
+
         if !browse.filters.publication_date.is_empty() {
             food.ingredients = Some(browse.filters.publication_date)
         }
@@ -119,6 +177,7 @@ impl QueryRoot {
         let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
+    // lindividual foods
     fn food(context: &Context, fid: String, nids: Vec<String>) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
@@ -132,6 +191,7 @@ impl QueryRoot {
         let data = food.get(&conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
+    // individual nutrients
     fn nutrient(context: &Context, nno: String) -> FieldResult<Vec<Nutrientview>> {
         let conn = context.db.get().unwrap();
         let mut n = Nutrient::new();
@@ -144,6 +204,7 @@ impl QueryRoot {
         }
         Ok(nv)
     }
+    // list nutrients
     fn nutrients(
         context: &Context,
         mut max: i32,
@@ -171,6 +232,7 @@ impl QueryRoot {
 
         Ok(nv)
     }
+    // list manufacturers
     fn manufacturers(
         context: &Context,
         mut max: i32,
@@ -193,6 +255,7 @@ impl QueryRoot {
         }
         Ok(mv)
     }
+    // list food groups
     fn food_groups(
         context: &Context,
         mut max: i32,
@@ -229,6 +292,11 @@ pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
+}
+#[derive(juniper::GraphQLObject, Debug)]
+#[graphql(description = "Count items returned by a query")]
+pub struct Querycount {
+    count: String,
 }
 #[derive(juniper::GraphQLObject, Debug)]
 #[graphql(description = "Defines a branded food product")]

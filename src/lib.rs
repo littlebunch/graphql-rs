@@ -27,4 +27,10 @@ pub trait Browse {
         order: String,
         c: &Self::Conn,
     ) -> Result<Vec<Self::Item>, Box<dyn Error>>;
+   
+}
+pub trait Count {
+    type Item;
+    type Conn;
+    fn query_count(&self,c: &Self::Conn) -> Result<i64,Box<dyn Error>>;
 }

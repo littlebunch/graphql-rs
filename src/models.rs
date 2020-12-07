@@ -1,31 +1,14 @@
 extern crate diesel;
-use self::diesel::{prelude::*, sql_query, sql_types::*};
-use diesel::expression::sql_literal::sql;
+use self::diesel::{prelude::*, sql_types::*};
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
 use crate::Browse;
-use crate::Get;
+use crate::{Get,Count};
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::dsl::count_star;
+use diesel::expression::sql_literal::sql;
 use diesel::mysql::MysqlConnection;
 use regex::Regex;
 use std::error::Error;
-pub struct BrowseFoodsQuery {
-    pub max: i32,
-    pub offset: i32,
-    pub sort: String,
-    pub order: String,
-    pub filters: BrowseFoodsFilters,
-}
-pub struct BrowseFoodsFilters {
-    pub publication_date: String,
-    pub food_group: String,
-    pub manufacturers: String,
-}
-pub struct SearchFoodsQuery {
-    pub max: i32,
-    pub offset: i32,
-    pub query: String,
-    pub filters: BrowseFoodsFilters,
-}
 #[derive(
     Identifiable,
     Queryable,
@@ -56,7 +39,6 @@ pub struct Food {
     pub country: Option<String>,
     pub ingredients: Option<String>,
 }
-
 impl Food {
     pub fn new() -> Self {
         Self {
@@ -78,106 +60,6 @@ impl Food {
         }
     }
 
-    pub fn search_foods(
-        &self,
-        sq: SearchFoodsQuery,
-        conn: &MysqlConnection,
-    ) -> Result<Vec<Food>, Box<dyn Error>> {
-        let filters = sq.filters;
-        let rows = sql_query(
-            "SELECT f.* FROM foods f WHERE MATCH(f.description,f.ingredients) AGAINST(?) ORDER BY f.description LIMIT ? OFFSET ?",
-        )
-        .bind::<Text, _>(sq.query)
-        .bind::<Integer, _>(sq.max)
-        .bind::<Integer, _>(sq.offset)
-        .load::<Food>(conn)?;
-        println!("{:?}", rows);
-        Ok(rows)
-    }
-    pub fn browse_foods(
-        &self,
-        bq: BrowseFoodsQuery,
-        conn: &MysqlConnection,
-    ) -> Result<Vec<Food>, Box<dyn Error>> {
-        use crate::schema::foods::dsl::*;
-        let mut q = foods.into_boxed();
-        let filters = bq.filters;
-        let sort = bq.sort;
-        let max = bq.max;
-        let order = bq.order;
-        let off = bq.offset;
-        match &*sort {
-            "description" => {
-                q = match &*order {
-                    "desc" => q.order(Box::new(description.desc())),
-                    _ => q.order(Box::new(description.asc())),
-                }
-            }
-            "upc" => {
-                q = match &*order {
-                    "desc" => q.order(Box::new(upc.desc())),
-                    _ => q.order(Box::new(upc.asc())),
-                }
-            }
-            "fdcId" => {
-                q = match &*order {
-                    "desc" => q.order(Box::new(fdc_id.desc())),
-                    _ => q.order(Box::new(fdc_id.asc())),
-                }
-            }
-            _ => {
-                q = match &*order {
-                    "desc" => q.order(Box::new(id.desc())),
-                    _ => q.order(Box::new(id.asc())),
-                }
-            }
-        };
-        // build publication date range if we have at least one date
-        if filters.publication_date != "" {
-            let dv = filters.publication_date.split(":").collect::<Vec<&str>>();
-            //let dv=ds.collect::<Vec<&str>>();
-            let mut fdate = dv[0].to_string();
-            let mut tdate = dv[0].to_string();
-            // set through date if provided in request
-            if dv.len() > 1 {
-                tdate = dv[1].to_string();
-            }
-            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
-            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
-            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
-            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
-            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
-            q = q.filter(publication_date.between(lhs, uhs));
-        }
-        // add manufacturer if we have one
-        if filters.manufacturers != "" {
-            let mut fm = Manufacturer::new();
-            fm.name = filters.manufacturers;
-            let i = match fm.find_by_name(conn) {
-                Ok(data) => data.id,
-                Err(_e) => -1,
-            };
-            q = q.filter(manufacturer_id.eq(i));
-        }
-        // add food group filter if we have one
-        if filters.food_group != "" {
-            let mut fgg = Foodgroup::new();
-            fgg.description = filters.food_group;
-            if fgg.description.len() == 0 {
-                fgg.description = String::from("Unknown");
-            }
-            let i = match fgg.find_by_description(conn) {
-                Ok(data) => data.id,
-                Err(_e) => -1,
-            };
-            q = q.filter(food_group_id.eq(i));
-        }
-        q = q.limit(max as i64).offset(off as i64);
-        // let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
-        // println!("The query: {:?}", debug);
-        let data = q.load::<Food>(conn)?;
-        Ok(data)
-    }
     pub fn get_food_group_name(&self, conn: &MysqlConnection) -> Result<String, Box<dyn Error>> {
         use crate::schema::food_groups::dsl::*;
         let fg = food_groups
@@ -222,6 +104,8 @@ impl Food {
         }
         Ok(ndv)
     }
+
+    
 }
 impl Get for Food {
     type Item = Food;
@@ -251,14 +135,15 @@ impl Browse for Food {
         conn: &Self::Conn,
     ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
         use crate::schema::foods::dsl::*;
-        
+        let qc = self.query_count(conn)?;
+        println!("Count={}",qc);
         let mut q = foods.into_boxed();
         if !self.description.is_empty() {
             let query = &self.description;
             q = q.filter(
                 sql("MATCH(foods.description,foods.ingredients) AGAINST(")
                     .bind::<Text, _>(query)
-                    .sql(")")
+                    .sql(")"),
             );
         }
         match &*sort {
@@ -281,22 +166,23 @@ impl Browse for Food {
                 }
             }
             _ => {
-                q = match &*order {
+                /*q = match &*order {
                     "desc" => q.order(Box::new(id.desc())),
                     _ => q.order(Box::new(id.asc())),
-                }
+                }*/
             }
         };
+
         if self.manufacturer_id > 0 {
-            q= q.filter(manufacturer_id.eq(self.manufacturer_id ));
+            q = q.filter(manufacturer_id.eq(self.manufacturer_id));
         }
         if self.food_group_id > 0 {
-            q= q.filter(food_group_id.eq(self.food_group_id ));
+            q = q.filter(food_group_id.eq(self.food_group_id));
         }
         // build publication date range if we have at least one date
-        let pubrange:String = match &self.ingredients {
+        let pubrange: String = match &self.ingredients {
             None => "".to_string(),
-            Some(inner)=> inner.to_string(),
+            Some(inner) => inner.to_string(),
         };
         if pubrange != "" {
             let dv = pubrange.split(":").collect::<Vec<&str>>();
@@ -315,10 +201,57 @@ impl Browse for Food {
             q = q.filter(publication_date.between(lhs, uhs));
         }
         q = q.limit(max).offset(off);
-        let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
-        println!("The query: {:?}", debug);
+
         let data = q.load::<Food>(conn)?;
         Ok(data)
+    }
+}
+impl Count for Food {
+    type Item = Food;
+    type Conn = MysqlConnection;
+    fn query_count(&self,conn: &Self::Conn) -> Result<i64,Box<dyn Error>> {
+        use crate::schema::foods::dsl::*;
+        let mut q = foods.into_boxed();
+        if !self.description.is_empty() {
+            let query = &self.description;
+            q = q.filter(
+                sql("MATCH(foods.description,foods.ingredients) AGAINST(")
+                    .bind::<Text, _>(query)
+                    .sql(")"),
+            );
+        }
+        if self.manufacturer_id > 0 {
+            q = q.filter(manufacturer_id.eq(self.manufacturer_id));
+        }
+        if self.food_group_id > 0 {
+            q = q.filter(food_group_id.eq(self.food_group_id));
+        }
+        // build publication date range if we have at least one date
+        let pubrange: String = match &self.ingredients {
+            None => "".to_string(),
+            Some(inner) => inner.to_string(),
+        };
+       if pubrange != "" {
+            let dv = pubrange.split(":").collect::<Vec<&str>>();
+            //let dv=ds.collect::<Vec<&str>>();
+            let mut fdate = dv[0].to_string();
+            let mut tdate = dv[0].to_string();
+            // set through date if provided in request
+            if dv.len() > 1 {
+                tdate = dv[1].to_string();
+            }
+            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
+            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
+            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
+            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
+            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
+            q = q.filter(publication_date.between(lhs, uhs));
+        }
+        //let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&q);
+        //println!("The query: {:?}", debug);
+        let c = q.select(count_star()).first::<i64>(conn)?;
+        
+        Ok(c)
     }
 }
 
@@ -606,6 +539,7 @@ impl NutrientdataForm {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
