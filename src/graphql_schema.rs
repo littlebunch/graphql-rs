@@ -69,6 +69,7 @@ impl juniper::IntoFieldError for CustomError {
 impl QueryRoot {
     // count foods in a query
     fn foods_count(context: &Context, mut filters: Browsefilters) -> FieldResult<Querycount> {
+        use std::convert::TryFrom;
         let mut food = Food::new();
         let conn = context.db.get().unwrap();
         if !filters.manufacturers.is_empty() {
@@ -103,7 +104,9 @@ impl QueryRoot {
         }
         food.description = filters.query;
        let c=food.query_count(&conn)?;
-        Ok(Querycount{count:c.to_string()})
+       let c64 = food.query_count(&conn)?;
+        let c32 = i32::try_from(c64)?;
+        Ok(Querycount { count: c32 })
     }
     // list foods
     fn foods(
@@ -296,7 +299,7 @@ pub fn create_schema() -> Schema {
 #[derive(juniper::GraphQLObject, Debug)]
 #[graphql(description = "Count items returned by a query")]
 pub struct Querycount {
-    count: String,
+    count: i32,
 }
 #[derive(juniper::GraphQLObject, Debug)]
 #[graphql(description = "Defines a branded food product")]

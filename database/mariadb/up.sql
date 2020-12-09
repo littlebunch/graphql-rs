@@ -1,6 +1,6 @@
 -- MariaDB dump 10.17  Distrib 10.4.13-MariaDB, for osx10.15 (x86_64)
 --
--- Host: localhost    Database: bfpd_test
+-- Host: localhost    Database: bfpd
 -- ------------------------------------------------------
 -- Server version	10.4.13-MariaDB
 
@@ -56,7 +56,7 @@ CREATE TABLE `food_groups` (
   `description` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `food_groups_description_IDX` (`description`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=717 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=957 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -92,9 +92,10 @@ CREATE TABLE `foods` (
   KEY `foods_food_group_id_IDX` (`food_group_id`) USING BTREE,
   KEY `foods_modified_date_IDX` (`modified_date`) USING BTREE,
   KEY `foods_publication_date_IDX` (`publication_date`) USING BTREE,
+  FULLTEXT KEY `foods_fulltext_IDX` (`ingredients`,`description`),
   CONSTRAINT `foods_FK` FOREIGN KEY (`manufacturer_id`) REFERENCES `manufacturers` (`id`),
   CONSTRAINT `foods_FK_1` FOREIGN KEY (`food_group_id`) REFERENCES `food_groups` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2034283 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=3030647 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -110,7 +111,7 @@ CREATE TABLE `manufacturers` (
   `name` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `manufacturers_name_IDX` (`name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=79035 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=107554 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,7 +138,7 @@ CREATE TABLE `nutrient_data` (
   CONSTRAINT `nutrient_data_FK` FOREIGN KEY (`nutrient_id`) REFERENCES `nutrients` (`id`),
   CONSTRAINT `nutrient_data_FK_1` FOREIGN KEY (`derivation_id`) REFERENCES `derivations` (`id`),
   CONSTRAINT `nutrient_data_food_FK` FOREIGN KEY (`food_id`) REFERENCES `foods` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14724392 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=27414630 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -186,4 +187,4 @@ CREATE TABLE `units` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-11-07  9:22:08
+-- Dump completed on 2020-12-09 15:53:33
