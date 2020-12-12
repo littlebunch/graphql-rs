@@ -1,5 +1,5 @@
 # graphql-rs
-A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com). (A preliminary [postgresql](https://www.postgresql.org) version is also available on the pg branch.)  This project is an exercise in learning Rust. I used https://github.com/iwilsonq/rust-graphql-example and https://github.com/andrewleverette/rust_csv_examples as starting points for the server and csv processing respectively.  The Rust learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
+A graphql server for the [USDA Branded Food Products](https://fdc.nal.usda.gov) dataset implemented with [Rust](https://www.rust-lang.org) using [Actix](https://actix.rs), [Juniper](https://docs.rs/juniper) and [Diesel](https://diesel.rs).  The data store is [mariadb](mariadb.com).  This project is an exercise in learning Rust. I used https://github.com/iwilsonq/rust-graphql-example and https://github.com/andrewleverette/rust_csv_examples as starting points for the server and csv processing respectively.  The Rust learning curve has been fairly steep for me but more than worthwhile.  Please share your suggestions for improving my Rust as well as the query functionality.   
 
 A running instance of the server is available at [rs.littlebunch.com](https://rs.littlebunch.com/).  A docker image is available on [docker hub](https://hub.docker.com/repository/docker/littlebunch/graphql-rs).  A recent dump of the database is available at [https://go.littlebunch.com](https://go.littlebunch.com/bfpd-2020-11-07.sql.gz).
 
@@ -21,6 +21,9 @@ If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/t
 ### Step 2: Clone this repo
 ```
 git clone git@github.com:littlebunch/graphql-rs.git
+```
+```
+git checkout mariadb
 ```
 ### Step 3: Build the binaries
 ```
@@ -156,6 +159,33 @@ To get you started, here are some sample queries you can paste into the client o
       nutrient
       unit
     }
+  }
+}
+```
+#### Search foods,  perform rudimentary searches using keywords in food descriptions and ingredients
+```
+{
+  foods(browse: {max: 150, offset: 0, sort: "", order: "", filters: {query:"BTY CRK HLO KTY COOKIE",pubdate: "", fg: "", manu: ""}}, nids: ["208"]) {
+    upc
+    description
+    publicationDate
+    manufacturer
+    foodGroup
+    ingredients
+    nutrientData {
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
+  }
+}
+```
+#### Count foods returned from a search
+```
+{
+  foodsCount( filters: {query:"BTY CRK HLO KTY COOKIE",pubdate: "", fg: "", manu: ""}) {
+   count
   }
 }
 ```
