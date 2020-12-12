@@ -2,16 +2,16 @@ extern crate dotenv;
 extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
-use crate::db::PgPool;
-use diesel::pg::PgConnection;
+use crate::db::MysqlPool;
+use diesel::mysql::MysqlConnection;
 use graphql_rs::models::*;
-use graphql_rs::{Browse, Count, Get};
+use graphql_rs::{Browse,Count,Get};
 use juniper::{graphql_value, FieldError, FieldResult, IntoFieldError, RootNode};
 const MAX_RECS: i32 = 150;
 
 #[derive(Clone)]
 pub struct Context {
-    pub db: PgPool,
+    pub db: MysqlPool,
 }
 
 impl juniper::Context for Context {}
@@ -103,26 +103,25 @@ impl QueryRoot {
             food.ingredients = Some(filters.publication_date)
         }
         food.description = filters.query;
-        let c64 = food.query_count(&conn)?;
+       let c=food.query_count(&conn)?;
+       let c64 = food.query_count(&conn)?;
         let c32 = i32::try_from(c64)?;
         Ok(Querycount { count: c32 })
     }
+    // list foods
     fn foods(
         context: &Context,
         mut browse: Browsequery,
         nids: Vec<String>,
     ) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
-
         let mut max = browse.max;
         if max > MAX_RECS || max < 1 {
             return Err(CustomError::MaxValidationError.into_field_error());
         }
-        let mut offset = browse.offset;
-        if offset < 0 {
+        if max < 0 {
             return Err(CustomError::OffsetError.into_field_error());
         }
-        let mut order = browse.order;
         let mut sort = browse.sort;
         if sort.is_empty() {
             sort = "id".to_string();
@@ -138,6 +137,8 @@ impl QueryRoot {
         if sort.is_empty() {
             return Err(CustomError::FoodSortError.into_field_error());
         }
+        let order = browse.order;
+        let offset = browse.offset;
         let mut food = Food::new();
         // stash filters into the Food struct, this is ugly but helps keep things simple
         // for users and the model
@@ -157,7 +158,6 @@ impl QueryRoot {
         if !browse.filters.food_group.is_empty() {
             let mut fgg = Foodgroup::new();
             fgg.description = browse.filters.food_group;
-            println!("food group={}",fgg.description);
             if fgg.description.len() == 0 {
                 fgg.description = String::from("Unknown");
             }
@@ -165,13 +165,13 @@ impl QueryRoot {
                 Ok(data) => data.id,
                 Err(_e) => -1,
             };
-            if i < 1 {
+            if food.food_group_id == -1 {
                 return Err(CustomError::FoodGroupNotFoundError.into_field_error());
             }
-            food.food_group_id = i;
         }
         // stash publication date filter into food ingredients
         // ugly but expedient
+
         if !browse.filters.publication_date.is_empty() {
             food.ingredients = Some(browse.filters.publication_date)
         }
@@ -180,6 +180,7 @@ impl QueryRoot {
         let data = food.browse(max as i64, offset as i64, sort, order, &conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
+    // lindividual foods
     fn food(context: &Context, fid: String, nids: Vec<String>) -> FieldResult<Vec<Foodview>> {
         let conn = context.db.get().unwrap();
         let mut food = Food::new();
@@ -193,6 +194,7 @@ impl QueryRoot {
         let data = food.get(&conn)?;
         Ok(Foodview::build_view(data, &nids, &conn))
     }
+    // individual nutrients
     fn nutrient(context: &Context, nno: String) -> FieldResult<Vec<Nutrientview>> {
         let conn = context.db.get().unwrap();
         let mut n = Nutrient::new();
@@ -205,6 +207,7 @@ impl QueryRoot {
         }
         Ok(nv)
     }
+    // list nutrients
     fn nutrients(
         context: &Context,
         mut max: i32,
@@ -232,6 +235,7 @@ impl QueryRoot {
 
         Ok(nv)
     }
+    // list manufacturers
     fn manufacturers(
         context: &Context,
         mut max: i32,
@@ -254,6 +258,7 @@ impl QueryRoot {
         }
         Ok(mv)
     }
+    // list food groups
     fn food_groups(
         context: &Context,
         mut max: i32,
@@ -290,6 +295,11 @@ pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, MutationRoot {})
+}
+#[derive(juniper::GraphQLObject, Debug)]
+#[graphql(description = "Count items returned by a query")]
+pub struct Querycount {
+    count: i32,
 }
 #[derive(juniper::GraphQLObject, Debug)]
 #[graphql(description = "Defines a branded food product")]
@@ -334,7 +344,7 @@ pub struct Foodview {
     pub nutrient_data: Vec<Nutrientdataview>,
 }
 impl Foodview {
-    pub fn build_view(fd: Vec<Food>, nids: &Vec<String>, conn: &PgConnection) -> Vec<Foodview> {
+    pub fn build_view(fd: Vec<Food>, nids: &Vec<String>, conn: &MysqlConnection) -> Vec<Foodview> {
         let mut fv: Vec<Foodview> = Vec::new();
         for i in &fd {
             let f = &i;
@@ -348,7 +358,7 @@ impl Foodview {
                 let nf = &j;
                 let mut nv = Nutrientdataview::create(&nf);
                 nv.portion_value = match fdv.serving_size {
-                    Some(x) => (x as f64 / 100.0) * nv.value,
+                    Some(x) => ((x as f64 / 100.0) * nv.value).round(),
                     None => 0.0,
                 };
                 ndv.push(nv);
@@ -359,7 +369,7 @@ impl Foodview {
         fv
     }
     /// creates a new food view from a food
-    pub fn create(f: &Food, conn: &PgConnection) -> Self {
+    pub fn create(f: &Food, conn: &MysqlConnection) -> Self {
         Self {
             publication_date: f.publication_date.format("%Y-%m-%d").to_string(),
             modified_date: f.modified_date.format("%Y-%m-%d").to_string(),
@@ -496,11 +506,7 @@ impl Nutrientview {
         }
     }
 }
-#[derive(juniper::GraphQLObject, Debug)]
-#[graphql(description = "Count items returned by a query")]
-pub struct Querycount {
-    count: i32,
-}
+
 #[derive(juniper::GraphQLInputObject, Debug)]
 #[graphql(
     name = "BrowseRequest",
@@ -515,7 +521,6 @@ pub struct Browsequery {
     pub sort: String,
     #[graphql(description = "Sort order, one of: asc (default) or desc")]
     pub order: String,
-    #[graphql(description = "Filters to apply to the data")]
     pub filters: Browsefilters,
 }
 #[derive(juniper::GraphQLInputObject, Debug)]
@@ -534,7 +539,7 @@ pub struct Browsefilters {
     pub manufacturers: String,
     #[graphql(
         name = "query",
-        description = "Filter on terms which appear in the food description and/or ingredients"
+        description = "Return records from specified manufacturer"
     )]
     pub query: String,
 }

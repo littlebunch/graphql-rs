@@ -1,0 +1,695 @@
+   Compiling graphql-rs v0.1.0 (/Users/gmoore/graphql-rs)
+error[E0433]: failed to resolve: could not find `derivations` in `schema`
+   --> src/csv.rs:457:24
+    |
+457 |     use crate::schema::derivations::dsl::*;
+    |                        ^^^^^^^^^^^ could not find `derivations` in `schema`
+
+error[E0433]: failed to resolve: could not find `derivations` in `schema`
+  --> src/models.rs:75:28
+   |
+75 |         use crate::schema::derivations::dsl::*;
+   |                            ^^^^^^^^^^^ could not find `derivations` in `schema`
+
+error[E0432]: unresolved import `crate::schema::derivations`
+ --> src/models.rs:4:21
+  |
+4 | use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
+  |                     ^^^^^^^^^^^ no `derivations` in `schema`
+
+error[E0433]: failed to resolve: use of undeclared type or module `derivations`
+  --> src/schema.rs:61:28
+   |
+61 | joinable!(nutrient_data -> derivations (derivation_id));
+   |                            ^^^^^^^^^^^ use of undeclared type or module `derivations`
+
+error[E0433]: failed to resolve: use of undeclared type or module `derivations`
+  --> src/schema.rs:66:5
+   |
+66 |     derivations,
+   |     ^^^^^^^^^^^ use of undeclared type or module `derivations`
+
+error[E0425]: cannot find value `derivations` in this scope
+   --> src/csv.rs:469:20
+    |
+469 |     Ok(insert_into(derivations)
+    |                    ^^^^^^^^^^^ not found in this scope
+
+error[E0412]: cannot find type `TsVector` in this scope
+  --> src/schema.rs:25:24
+   |
+25 |         kw_tsvector -> TsVector,
+   |                        ^^^^^^^^ not found in this scope
+   |
+   = note: possible candidate is found in another module, you can import it into scope:
+           diesel_full_text_search::TsVector
+
+error[E0271]: type mismatch resolving `<schema::food_groups::table as diesel::query_source::AppearsInFromClause<schema::food_groups::table>>::Count == diesel::query_source::Once`
+ --> src/schema.rs:1:1
+  |
+1 | / table! {
+2 | |     food_groups (id) {
+3 | |         id -> Int4,
+4 | |         description -> Varchar,
+5 | |     }
+6 | | }
+  | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+  |
+  = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::food_groups::table>` for `schema::food_groups::columns::id`
+  = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::food_groups::table as diesel::query_source::AppearsInFromClause<schema::food_groups::table>>::Count == diesel::query_source::Once`
+ --> src/schema.rs:1:1
+  |
+1 | / table! {
+2 | |     food_groups (id) {
+3 | |         id -> Int4,
+4 | |         description -> Varchar,
+5 | |     }
+6 | | }
+  | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+  |
+  = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::food_groups::table>` for `schema::food_groups::columns::id`
+  = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::food_groups::table>` for `(schema::food_groups::columns::id, schema::food_groups::columns::description)`
+  = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::food_groups::table as diesel::query_source::AppearsInFromClause<schema::food_groups::table>>::Count == diesel::query_source::Once`
+ --> src/schema.rs:1:1
+  |
+1 | / table! {
+2 | |     food_groups (id) {
+3 | |         id -> Int4,
+4 | |         description -> Varchar,
+5 | |     }
+6 | | }
+  | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+  |
+  = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::food_groups::table>` for `schema::food_groups::columns::id`
+  = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::food_groups::table as diesel::query_source::AppearsInFromClause<schema::food_groups::table>>::Count == diesel::query_source::Once`
+ --> src/schema.rs:1:1
+  |
+1 | / table! {
+2 | |     food_groups (id) {
+3 | |         id -> Int4,
+4 | |         description -> Varchar,
+5 | |     }
+6 | | }
+  | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+  |
+  = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::food_groups::table>` for `schema::food_groups::columns::description`
+  = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::id`
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `(schema::foods::columns::id, schema::foods::columns::publication_date, schema::foods::columns::modified_date, schema::foods::columns::available_date, schema::foods::columns::upc, schema::foods::columns::fdc_id, schema::foods::columns::description, schema::foods::columns::food_group_id, schema::foods::columns::manufacturer_id, schema::foods::columns::datasource, schema::foods::columns::serving_size, schema::foods::columns::serving_unit, schema::foods::columns::serving_description, schema::foods::columns::country, schema::foods::columns::ingredients, schema::foods::columns::kw_tsvector)`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::publication_date`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::modified_date`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::available_date`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::upc`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::fdc_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::description`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::food_group_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::manufacturer_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::datasource`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::serving_size`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::serving_unit`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::serving_description`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::country`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::ingredients`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::foods::table as diesel::query_source::AppearsInFromClause<schema::foods::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:8:1
+   |
+8  | / table! {
+9  | |     foods (id) {
+10 | |         id -> Int4,
+11 | |         publication_date -> Timestamptz,
+...  |
+26 | |     }
+27 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::foods::table>` for `schema::foods::columns::kw_tsvector`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::manufacturers::table as diesel::query_source::AppearsInFromClause<schema::manufacturers::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:29:1
+   |
+29 | / table! {
+30 | |     manufacturers (id) {
+31 | |         id -> Int4,
+32 | |         name -> Varchar,
+33 | |     }
+34 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::manufacturers::table>` for `schema::manufacturers::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::manufacturers::table as diesel::query_source::AppearsInFromClause<schema::manufacturers::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:29:1
+   |
+29 | / table! {
+30 | |     manufacturers (id) {
+31 | |         id -> Int4,
+32 | |         name -> Varchar,
+33 | |     }
+34 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::manufacturers::table>` for `schema::manufacturers::columns::id`
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::manufacturers::table>` for `(schema::manufacturers::columns::id, schema::manufacturers::columns::name)`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::manufacturers::table as diesel::query_source::AppearsInFromClause<schema::manufacturers::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:29:1
+   |
+29 | / table! {
+30 | |     manufacturers (id) {
+31 | |         id -> Int4,
+32 | |         name -> Varchar,
+33 | |     }
+34 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::manufacturers::table>` for `schema::manufacturers::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::manufacturers::table as diesel::query_source::AppearsInFromClause<schema::manufacturers::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:29:1
+   |
+29 | / table! {
+30 | |     manufacturers (id) {
+31 | |         id -> Int4,
+32 | |         name -> Varchar,
+33 | |     }
+34 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::manufacturers::table>` for `schema::manufacturers::columns::name`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::id`
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `(schema::nutrient_data::columns::id, schema::nutrient_data::columns::value, schema::nutrient_data::columns::standard_error, schema::nutrient_data::columns::minimum, schema::nutrient_data::columns::maximum, schema::nutrient_data::columns::median, schema::nutrient_data::columns::derivation_id, schema::nutrient_data::columns::nutrient_id, schema::nutrient_data::columns::food_id)`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::value`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::standard_error`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::minimum`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::maximum`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::median`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::derivation_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::nutrient_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrient_data::table as diesel::query_source::AppearsInFromClause<schema::nutrient_data::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:36:1
+   |
+36 | / table! {
+37 | |     nutrient_data (id) {
+38 | |         id -> Int4,
+39 | |         value -> Float8,
+...  |
+47 | |     }
+48 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrient_data::table>` for `schema::nutrient_data::columns::food_id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::id`
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `(schema::nutrients::columns::id, schema::nutrients::columns::nutrientno, schema::nutrients::columns::description, schema::nutrients::columns::unit)`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::id`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::nutrientno`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::description`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0271]: type mismatch resolving `<schema::nutrients::table as diesel::query_source::AppearsInFromClause<schema::nutrients::table>>::Count == diesel::query_source::Once`
+  --> src/schema.rs:50:1
+   |
+50 | / table! {
+51 | |     nutrients (id) {
+52 | |         id -> Int4,
+53 | |         nutrientno -> Varchar,
+...  |
+56 | |     }
+57 | | }
+   | |_^ expected struct `diesel::query_source::Never`, found struct `diesel::query_source::Once`
+   |
+   = note: required because of the requirements on the impl of `diesel::AppearsOnTable<schema::nutrients::table>` for `schema::nutrients::columns::unit`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 50 previous errors
+
+Some errors have detailed explanations: E0271, E0412, E0425, E0432, E0433.
+For more information about an error, try `rustc --explain E0271`.
+error: could not compile `graphql-rs`.
+
+To learn more, run the command again with --verbose.

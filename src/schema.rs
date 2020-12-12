@@ -1,65 +1,65 @@
 table! {
     derivations (id) {
-        id -> Integer,
-        code -> Varchar,
-        description -> Mediumtext,
+    id -> Int4,
+    code -> Varchar,
+    description -> Text,
+ }
+}
+table! {
+    food_groups (id) {
+        id -> Int4,
+        description -> Varchar,
     }
 }
-
+//use diesel_full_text_search::TsVector;
 table! {
     foods (id) {
-        id -> Integer,
-        publication_date -> Datetime,
-        modified_date -> Datetime,
-        available_date -> Datetime,
+        id -> Int4,
+        publication_date -> Timestamptz,
+        modified_date -> Timestamptz,
+        available_date -> Timestamptz,
         upc -> Varchar,
         fdc_id -> Varchar,
         description -> Varchar,
-        food_group_id -> Integer,
-        manufacturer_id -> Integer,
+        food_group_id -> Int4,
+        manufacturer_id -> Int4,
         datasource -> Varchar,
-        serving_size -> Nullable<Double>,
+        serving_size -> Nullable<Float8>,
         serving_unit -> Nullable<Varchar>,
         serving_description -> Nullable<Varchar>,
         country -> Nullable<Varchar>,
-        ingredients -> Nullable<Mediumtext>,
-    }
-}
-
-table! {
-    food_groups (id) {
-        id -> Integer,
-        description -> Varchar,
+        ingredients -> Nullable<Text>,
+       kw_tsvector -> diesel_full_text_search::TsVector,
     }
 }
 
 table! {
     manufacturers (id) {
-        id -> Integer,
+        id -> Int4,
         name -> Varchar,
     }
 }
 
 table! {
-    nutrients (id) {
-        id -> Integer,
-        nutrientno -> Varchar,
-        description -> Varchar,
-        unit -> Varchar,
+    nutrient_data (id) {
+        id -> Int4,
+        value -> Float8,
+        standard_error -> Nullable<Float8>,
+        minimum -> Nullable<Float8>,
+        maximum -> Nullable<Float8>,
+        median -> Nullable<Float8>,
+        derivation_id -> Int4,
+        nutrient_id -> Int4,
+        food_id -> Int4,
     }
 }
 
 table! {
-    nutrient_data (id) {
-        id -> Integer,
-        value -> Double,
-        standard_error -> Nullable<Double>,
-        minimum -> Nullable<Double>,
-        maximum -> Nullable<Double>,
-        median -> Nullable<Double>,
-        derivation_id -> Integer,
-        nutrient_id -> Integer,
-        food_id -> Integer,
+    nutrients (id) {
+        id -> Int4,
+        nutrientno -> Varchar,
+        description -> Varchar,
+        unit -> Varchar,
     }
 }
 
@@ -71,9 +71,9 @@ joinable!(nutrient_data -> nutrients (nutrient_id));
 
 allow_tables_to_appear_in_same_query!(
     derivations,
-    foods,
     food_groups,
+    foods,
     manufacturers,
-    nutrients,
     nutrient_data,
+    nutrients,
 );

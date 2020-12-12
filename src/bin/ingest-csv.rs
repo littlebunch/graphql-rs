@@ -5,7 +5,7 @@ extern crate clap;
 
 use crate::diesel::Connection;
 use clap::App;
-use diesel::mysql::MysqlConnection;
+use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use graphql_rs::csv::{process_derivations, process_foods, process_nutdata, process_nutrients};
 use std::env;
@@ -35,11 +35,10 @@ impl Error for ArgError {
         &self.msg
     }
 }
-fn establish_connection() -> MysqlConnection {
+fn establish_connection() -> PgConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("Bad url");
-    MysqlConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
+    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }
 /// imports USDA csv files into the database
 fn run() -> Result<usize, Box<dyn Error>> {
@@ -78,7 +77,7 @@ fn run() -> Result<usize, Box<dyn Error>> {
             count = match process_nutrients(path.to_string(), &conn) {
                 Ok(c) => c,
                 Err(e) => {
-                    eprintln!("{}", e);
+                    eprintln!("{} {}", path.to_string(), e);
                     process::exit(1);
                 }
             };
@@ -122,6 +121,7 @@ fn run() -> Result<usize, Box<dyn Error>> {
             };
             println!("Finished foods.");
             println!("Now loading nutrient data.");
+
             count += match process_nutdata(path.to_string(), &conn) {
                 Ok(c) => c,
                 Err(e) => {
@@ -144,6 +144,12 @@ fn run() -> Result<usize, Box<dyn Error>> {
 //#[derive(Debug, Serialize, Deserialize)]
 ///
 fn main() {
+    match () {
+        #[cfg(not(feature = "pg"))]
+        () => println!("db not set for pg"),
+        #[cfg(feature = "pg")]
+        () => println!("db set for pg"),
+    };
     match run() {
         Ok(count) => {
             println!("Finished. {} total records loaded", count);

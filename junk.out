@@ -1,0 +1,31 @@
+   Compiling graphql-rs v0.1.0 (/Users/gmoore/graphql-rs)
+error[E0432]: unresolved import `diesel::sql_type`
+ --> src/schema.rs:2:13
+  |
+2 | use diesel::sql_type::*;
+  |             ^^^^^^^^ could not find `sql_type` in `diesel`
+
+error[E0412]: cannot find type `TsVector` in this scope
+  --> src/schema.rs:35:24
+   |
+35 |         kw_tsvector -> TsVector,
+   |                        ^^^^^^^^ not found in this scope
+   |
+   = note: possible candidate is found in another module, you can import it into scope:
+           diesel_full_text_search::TsVector
+
+warning: unused import: `diesel_full_text_search::TsVector`
+ --> src/schema.rs:1:5
+  |
+1 | use diesel_full_text_search::TsVector;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error: aborting due to 2 previous errors
+
+Some errors have detailed explanations: E0412, E0432.
+For more information about an error, try `rustc --explain E0412`.
+error: could not compile `graphql-rs`.
+
+To learn more, run the command again with --verbose.

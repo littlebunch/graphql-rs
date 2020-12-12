@@ -2,28 +2,17 @@ extern crate diesel;
 
 use self::diesel::prelude::*;
 use crate::schema::{derivations, foods, manufacturers, nutrient_data, nutrients};
-use crate::{Browse, Count, Get};
+use crate::Browse;
+use crate::Get;
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::count_star;
 use diesel::pg::expression::dsl::any;
-use diesel::pg::Pg;
 use diesel::pg::PgConnection;
-use diesel_full_text_search::{plainto_tsquery,TsVectorExtensions};
-use regex::Regex;
 use std::error::Error;
 #[derive(
-    Identifiable,
-    Queryable,
-    Associations,
-    PartialEq,
-    AsChangeset,
-    Clone,
-    Serialize,
-    Deserialize,
-    Debug,
+    Identifiable, Queryable, Associations, PartialEq, Insertable, Serialize, Deserialize, Debug,
 )]
 #[belongs_to(Manufacturer)]
-//#[table_name = "foods"]
+#[table_name = "foods"]
 pub struct Food {
     pub id: i32,
     pub publication_date: NaiveDateTime,
@@ -41,41 +30,6 @@ pub struct Food {
     pub country: Option<String>,
     pub ingredients: Option<String>,
 }
-// defines a constant for returning all columns except the tsvector
-type FoodColumns = (
-    foods::id,
-    foods::publication_date,
-    foods::modified_date,
-    foods::available_date,
-    foods::upc,
-    foods::fdc_id,
-    foods::description,
-    foods::food_group_id,
-    foods::manufacturer_id,
-    foods::datasource,
-    foods::serving_size,
-    foods::serving_unit,
-    foods::serving_description,
-    foods::country,
-    foods::ingredients,
-);
-const FOOD_COLUMNS: FoodColumns = (
-    foods::id,
-    foods::publication_date,
-    foods::modified_date,
-    foods::available_date,
-    foods::upc,
-    foods::fdc_id,
-    foods::description,
-    foods::food_group_id,
-    foods::manufacturer_id,
-    foods::datasource,
-    foods::serving_size,
-    foods::serving_unit,
-    foods::serving_description,
-    foods::country,
-    foods::ingredients,
-);
 impl Food {
     pub fn new() -> Self {
         Self {
@@ -147,25 +101,14 @@ impl Get for Food {
     type Item = Food;
     type Conn = PgConnection;
     fn get(&self, conn: &Self::Conn) -> Result<Vec<Self::Item>, Box<dyn Error>> {
-        use crate::schema;
         use crate::schema::foods::dsl::*;
-        let q = schema::foods::table.into_boxed::<Pg>();
         let data;
         if self.upc != "unknown" {
-            data = q
-                .select(FOOD_COLUMNS)
-                .filter(upc.eq(&self.upc))
-                .load::<Food>(conn)?;
+            data = foods.filter(upc.eq(&self.upc)).load::<Food>(conn)?;
         } else if self.id > 0 {
-            data = q
-                .select(FOOD_COLUMNS)
-                .filter(id.eq(&self.id))
-                .load::<Food>(conn)?;
+            data = foods.find(&self.id).load::<Food>(conn)?;
         } else {
-            data = q
-                .select(FOOD_COLUMNS)
-                .filter(fdc_id.eq(&self.fdc_id))
-                .load::<Food>(conn)?;
+            data = foods.filter(fdc_id.eq(&self.fdc_id)).load::<Food>(conn)?;
         }
         Ok(data)
     }
@@ -181,16 +124,8 @@ impl Browse for Food {
         order: String,
         conn: &Self::Conn,
     ) -> Result<Vec<Self::Item>, Box<dyn Error>> {
-        use crate::schema;
         use crate::schema::foods::dsl::*;
-        let mut q = schema::foods::table.into_boxed::<Pg>();
-        let mut query = "";
-        if !self.description.is_empty() {
-            query = &self.description;
-        }
-        if !query.is_empty() {
-            q = q.filter(kw_tsvector.matches(plainto_tsquery(query)));
-        }
+        let mut q = foods.into_boxed();
         match &*sort {
             "description" => {
                 q = match &*order {
@@ -211,96 +146,20 @@ impl Browse for Food {
                 }
             }
             _ => {
-                /* q = match &*order {
-                    "desc" => q.order(Box::new(rank.desc())),
-                    _ => q.order(Box::new(rank.asc())),
-                }*/
+                q = match &*order {
+                    "desc" => q.order(Box::new(id.desc())),
+                    _ => q.order(Box::new(id.asc())),
+                }
             }
         };
-        if self.food_group_id > 0 {
-            q = q.filter(food_group_id.eq(self.food_group_id));
-        }
-        if self.manufacturer_id > 0 {
-            q = q.filter(manufacturer_id.eq(self.manufacturer_id));
-        }
-        // build publication date range if we have at least one date
-        let pubrange: String = match &self.ingredients {
-            None => "".to_string(),
-            Some(inner) => inner.to_string(),
-        };
-        if pubrange != "" {
-            let dv = pubrange.split(":").collect::<Vec<&str>>();
-            //let dv=ds.collect::<Vec<&str>>();
-            let mut fdate = dv[0].to_string();
-            let mut tdate = dv[0].to_string();
-            // set through date if provided in request
-            if dv.len() > 1 {
-                tdate = dv[1].to_string();
-            }
-            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
-            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
-            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
-            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
-            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
-            q = q.filter(publication_date.between(lhs, uhs));
-        }
-        //let debug = diesel::debug_query::<Pg, _>(&q);
-       //println!("The query: {:?}", debug);
-        let data = q
-            .select(FOOD_COLUMNS)
-            .limit(max)
-            .offset(off)
-            .load::<Food>(conn)?;
+        q = q.limit(max).offset(off);
+        // let debug = diesel::debug_query::<diesel::pg:Pg:, _>(&q);
+        // println!("The query: {:?}", debug);
+        let data = q.load::<Food>(conn)?;
         Ok(data)
     }
 }
-impl Count for Food {
-    type Item = Food;
-    type Conn = PgConnection;
-    fn query_count(&self, conn: &Self::Conn) -> Result<i64, Box<dyn Error>> {
-        use crate::schema::foods::dsl::*;
-        let mut q = foods.into_boxed();
-        let mut query = "";
-        if !self.description.is_empty() {
-            query = &self.description;
-        }
-        if !query.is_empty() {
-            q = q.filter(kw_tsvector.matches(plainto_tsquery(query)));
-        }
-        if self.manufacturer_id > 0 {
-            q = q.filter(manufacturer_id.eq(self.manufacturer_id));
-        }
-        if self.food_group_id > 0 {
-            q = q.filter(food_group_id.eq(self.food_group_id));
-        }
-        // build publication date range if we have at least one date
-        let pubrange: String = match &self.ingredients {
-            None => "".to_string(),
-            Some(inner) => inner.to_string(),
-        };
-        if pubrange != "" {
-            let dv = pubrange.split(":").collect::<Vec<&str>>();
-            //let dv=ds.collect::<Vec<&str>>();
-            let mut fdate = dv[0].to_string();
-            let mut tdate = dv[0].to_string();
-            // set through date if provided in request
-            if dv.len() > 1 {
-                tdate = dv[1].to_string();
-            }
-            let re = Regex::new(r"(?P<y>\d{4})[-/ ](?P<m>\d{2})[-/ ](?P<d>\d{2})").unwrap();
-            fdate = re.replace_all(&fdate, "$y$m$d").to_string() + " 00:01:00";
-            tdate = re.replace_all(&tdate, "$y$m$d").to_string() + " 23:59:00";
-            let lhs = NaiveDateTime::parse_from_str(&fdate, "%Y%m%d %H:%M:%S")?;
-            let uhs = NaiveDateTime::parse_from_str(&tdate, "%Y%m%d %H:%M:%S")?;
-            q = q.filter(publication_date.between(lhs, uhs));
-        }
-        //let debug = diesel::debug_query::<Pg, _>(&q);
-        //println!("The query: {:?}", debug);
-        let c = q.select(count_star()).first::<i64>(conn)?;
 
-        Ok(c)
-    }
-}
 #[derive(Identifiable, Queryable, Associations, PartialEq, Serialize, Deserialize, Debug)]
 #[table_name = "manufacturers"]
 pub struct Manufacturer {

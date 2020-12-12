@@ -4,8 +4,8 @@ pub mod models;
 pub mod schema;
 #[macro_use]
 extern crate diesel;
+extern crate diesel_full_text_search;
 extern crate dotenv;
-extern crate regex;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
@@ -27,10 +27,9 @@ pub trait Browse {
         order: String,
         c: &Self::Conn,
     ) -> Result<Vec<Self::Item>, Box<dyn Error>>;
-   
 }
 pub trait Count {
     type Item;
     type Conn;
-    fn query_count(&self,c: &Self::Conn) -> Result<i64,Box<dyn Error>>;
+    fn query_count(&self, c: &Self::Conn) -> Result<i64, Box<dyn Error>>;
 }
