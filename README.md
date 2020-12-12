@@ -48,7 +48,7 @@ wget https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_branded_food_csv_202
 wget https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_Supporting_Data_csv_2020-04-29.zip
 ```
 
-2. Create an empty schema using the schema provided in database/bfpd-schema.sql. 
+2. Create an empty schema using the schema. 
 ```
 createdb bfpd"
 ```
@@ -126,6 +126,25 @@ To get you started, here are some sample queries you can paste into the client o
 ```
 {
   foods(browse:{max: 150, offset: 0, sort: "description", order:"desc",filters:{query:"",manu:"",fg:"",pubdate:""}}, nids: []) {
+    upc
+    description
+    manufacturer
+    food
+    ingredients
+    foodGroup
+    nutrientData {
+      portionValue
+      nutrientNo
+      nutrient
+      unit
+    }
+  }
+}
+```
+#### Browse foods, sorted ascending by upc filtered on publication date range from 2020-02-01 through 2020-05-31 and manufacturer "GENERAL MILLS SALES INC.":
+```
+{
+  foods(browse: {max: 150, offset: 0, sort: "description", order: "asc", filters: {pubdate: "20200201:20200531", fg: "", manu: "GENERAL MILLS SALES INC."}}, nids: []) {
     upc
     description
     manufacturer
