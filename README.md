@@ -23,9 +23,6 @@ If you haven't already, install the Rust [toolchain](https://www.rust-lang.org/t
 ```
 git clone git@github.com:littlebunch/graphql-rs.git
 ```
-```
-git checkout pg
-```
 ### Step 3: Build the binaries
 ```
 cargo build --release
