@@ -148,7 +148,6 @@ To get you started, here are some sample queries you can paste into the client o
     upc
     description
     manufacturer
-    food
     ingredients
     foodGroup
     nutrientData {
